@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Venta de Tarjetas Full Datos - Panel de Usuario</title>
     <style>
-        /* --- ESTILOS MODERNOS Y VIBRANTES (CSS) --- */
+        /* [Estilos CSS: Se mantienen igual que en la versión anterior para no sobrecargar el código] */
         :root {
             --color-primary: #FF5733; 
             --color-secondary: #007bff; 
@@ -322,7 +322,8 @@
             }
         } catch (error) {
             console.error('Error al intentar autenticar:', error);
-            errorDiv.textContent = '❌ Error de conexión de red con el servidor. Intenta de nuevo.';
+            // Si el servidor está activo, este error es casi siempre CORS.
+            errorDiv.textContent = '❌ Error de conexión de red con el servidor. Verifica tu consola (F12) por errores CORS.';
         }
     }
     
@@ -343,13 +344,9 @@
         if (!confirm('¿Estás seguro de que quieres cerrar la sesión?')) return;
 
         try {
-            await fetch(LOGOUT_URL, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${userToken}` }
-            });
-        } catch (error) {
-            console.warn('Advertencia: Falló la notificación al servidor, cerrando sesión local.');
-        }
+            // No hay LOGOUT REAL en el Backend simulado, solo cerramos localmente.
+            await fetch(LOGOUT_URL, { method: 'POST' }); 
+        } catch (error) {} // Ignoramos errores de red al cerrar sesión
 
         userToken = null;
         emailRegistrado = '';
@@ -372,6 +369,7 @@
             emailRegistrado = sessionStorage.getItem('userEmail');
             
             try {
+                // Aquí usamos el saldo guardado para simular la persistencia
                 const response = await fetch(GET_BALANCE_URL, {
                     method: 'GET',
                     headers: { 'Authorization': `Bearer ${userToken}` }
@@ -386,6 +384,7 @@
                     return;
                 }
             } catch (error) {
+                // Usar saldo local si falla la conexión
                 saldoUsuario = parseFloat(sessionStorage.getItem('userBalance')) || 0;
             }
 
@@ -398,7 +397,7 @@
         actualizarSaldoUI();
     }
 
-    // --- Funciones de Saldo (Recarga REAL al Servidor) ---
+    // --- Funciones de Saldo y Compra ---
 
     function actualizarSaldoUI() {
         document.getElementById('saldo-display').textContent = formatoMoneda(saldoUsuario);
@@ -454,8 +453,6 @@
         }
     }
 
-    // --- Funciones de Compra (Conexión REAL al Servidor) ---
-    
     async function procesarCompra() {
         const resultadoDiv = document.getElementById('pago-resultado');
         const overlay = document.getElementById('loading-overlay');
@@ -500,7 +497,7 @@
         }
     }
     
-    // --- Funciones de Utilidad y Renderizado (Mantenidas) ---
+    // --- Funciones de Utilidad y Renderizado ---
 
     function formatoMoneda(valor) {
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(valor);
