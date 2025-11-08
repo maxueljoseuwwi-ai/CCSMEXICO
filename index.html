@@ -104,7 +104,7 @@
             cursor: not-allowed;
         }
 
-        /* Modales */
+        /* --- MODAL CORRECCIÓN --- */
         .modal {
             display: none; 
             position: fixed; 
@@ -113,11 +113,13 @@
             top: 0;
             width: 100%; 
             height: 100%; 
+            overflow: auto; /* Permite scroll si el contenido es grande */
             background-color: rgba(0,0,0,0.8);
-            padding-top: 60px;
+            padding-top: 30px; /* Reducido para mejor visualización en PC */
         }
         .modal-content {
             background-color: #fefefe;
+            /* Margen reducido para subir el modal */
             margin: 5% auto; 
             padding: 30px;
             border: 1px solid #888;
@@ -126,7 +128,27 @@
             border-radius: 10px;
             text-align: center;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            position: relative; /* Para posicionar el botón de cierre */
         }
+        /* Estilo para el botón de cierre (la X) */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        /* -------------------------- */
+        
         .modal-content h2 { color: var(--color-primary); }
         .modal-content input, .modal-content select {
             width: 90%;
@@ -157,6 +179,10 @@
             border-radius: 5px;
             text-align: left;
         }
+        #transferencia-info ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
         #tarjeta-inputs {
             margin-top: 15px;
             text-align: left;
@@ -183,6 +209,7 @@
 
 <div id="loginModal" class="modal">
   <div class="modal-content">
+    <span class="close" onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
     <h2>🔑 Acceso al Panel de Control</h2>
     <p>Ingresa tus credenciales. Si el correo no existe, **se registrará automáticamente**.</p>
     <input type="text" id="login-email" placeholder="Correo Electrónico" required>
@@ -194,6 +221,7 @@
 
 <div id="recargaModal" class="modal">
     <div class="modal-content">
+        <span class="close" onclick="document.getElementById('recargaModal').style.display='none'">&times;</span>
         <h2>💵 Recargar Saldo al Panel</h2>
         <p>Selecciona tu forma de pago. (Monto fijo de recarga: \$10,000 MXN).</p>
         
@@ -373,7 +401,6 @@
     // --- Funciones de Sesión ---
 
     async function handleAuth() {
-        // [CÓDIGO DE LOGIN/REGISTRO MANTENIDO IGUAL]
         const email = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value;
         const errorDiv = document.getElementById('login-error');
@@ -416,7 +443,6 @@
     }
     
     function completarLogin(token, balance) {
-        // [CÓDIGO COMPLETAR LOGIN MANTENIDO IGUAL]
         userToken = token;
         emailRegistrado = tempEmail;
         saldoUsuario = balance || 0;
@@ -430,7 +456,6 @@
     }
 
     async function cerrarSesion() {
-        // [CÓDIGO CERRAR SESIÓN MANTENIDO IGUAL]
         if (!confirm('¿Estás seguro de que quieres cerrar la sesión?')) return;
 
         try {
@@ -453,7 +478,6 @@
     }
 
     async function cargarEstadoInicial() {
-        // [CÓDIGO CARGAR ESTADO INICIAL MANTENIDO IGUAL]
         if (sessionStorage.getItem('authToken')) {
             userToken = sessionStorage.getItem('authToken');
             emailRegistrado = sessionStorage.getItem('userEmail');
@@ -537,11 +561,13 @@
             transferenciaDiv.style.display = 'none';
             btn.textContent = 'Pagar Recarga';
             btn.style.backgroundColor = 'var(--color-success)';
+            btn.style.display = 'block';
         } else { // Transferencia
             tarjetaDiv.style.display = 'none';
             transferenciaDiv.style.display = 'block';
             btn.textContent = 'Continuar (Revisar Instrucciones)';
-            btn.style.backgroundColor = '#777'; // Un color neutro
+            btn.style.backgroundColor = '#777'; 
+            btn.style.display = 'block';
         }
         document.getElementById('recarga-resultado').textContent = '';
     }
@@ -569,7 +595,8 @@
         if (formaPago === 'Transferencia') {
             // Lógica de Transferencia
             resultadoDiv.innerHTML = `<span style="color: var(--color-success); font-weight: bold;">✅ Instrucciones Enviadas:</span> Por favor, sigue los pasos de la sección de Transferencia. Los fondos se aplicarán tras la verificación manual.`;
-            document.getElementById('btn-recargar-pago').style.display = 'none';
+            // Quitamos el botón de pago después de dar instrucciones para evitar reintentos.
+            document.getElementById('btn-recargar-pago').style.display = 'none'; 
             return;
         }
 
@@ -578,8 +605,8 @@
         const errorTDC = document.getElementById('recarga-error-tarjeta');
         errorTDC.textContent = '';
         
-        if (numTarjeta.length < 16) {
-             errorTDC.textContent = '❌ Número de tarjeta incompleto.';
+        if (numTarjeta.length < 16 || document.getElementById('recarga-nombre-tarjeta').value.trim() === '') {
+             errorTDC.textContent = '❌ Por favor, complete todos los datos de la tarjeta.';
              return;
         }
         
@@ -618,14 +645,12 @@
     // --- Funciones de Compra con Saldo (Mantenidas) ---
 
     function actualizarSaldoUI() {
-        // [CÓDIGO ACTUALIZAR SALDO MANTENIDO IGUAL]
         document.getElementById('saldo-display').textContent = formatoMoneda(saldoUsuario);
         sessionStorage.setItem('userBalance', saldoUsuario.toFixed(2));
         renderizarProductos(); 
     }
     
     async function procesarCompra() {
-        // [CÓDIGO PROCESAR COMPRA MANTENIDO IGUAL]
         const resultadoDiv = document.getElementById('pago-resultado');
         const overlay = document.getElementById('loading-overlay');
         overlay.style.display = 'flex';
@@ -670,7 +695,6 @@
     }
 
     function renderizarProductos() {
-        // [CÓDIGO RENDERIZAR PRODUCTOS MANTENIDO IGUAL]
         const container = document.getElementById('productos-container');
         container.innerHTML = '';
         
@@ -694,7 +718,6 @@
     }
 
     function agregarAlCarrito(precio, nombreProducto) {
-        // [CÓDIGO AGREGAR AL CARRITO MANTENIDO IGUAL]
         if (!userToken) {
             alert('Debes iniciar sesión para realizar compras.');
             document.getElementById('loginModal').style.display = 'block';
