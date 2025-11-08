@@ -252,13 +252,12 @@
 
 <script>
     // ---------------------------------------------------------------------------------------
-    // 🚀 CONFIGURACIÓN DE TU SERVIDOR - ¡CORREGIDO!
-    // Apunta a tu Backend real alojado en Render.
+    // 🚀 CONFIGURACIÓN DE TU SERVIDOR - ¡URL REAL DE RENDER!
     // ---------------------------------------------------------------------------------------
-    const RENDER_URL = 'https://ccsmexico.onrender.com';
+    const RENDER_URL = 'https://ccsmexico.onrender.com'; // <--- ¡Apunta a tu Backend!
     const BASE_URL = `${RENDER_URL}/api`; 
 
-    const AUTH_URL = `${BASE_URL}/auth`; // Endpoint unificado para Login/Register
+    const AUTH_URL = `${BASE_URL}/auth`; 
     const LOGOUT_URL = `${BASE_URL}/logout`;
     const GET_BALANCE_URL = `${BASE_URL}/balance`;
     const RECHARGE_URL = `${BASE_URL}/recharge`;
@@ -271,7 +270,6 @@
     let montoCompra = 0; 
     let tipoTarjetaDetectado = '';
     
-    // Al no requerir verificación, solo necesitamos guardar las credenciales en la UI
     let tempEmail = ''; 
 
     const productos = [
@@ -297,11 +295,10 @@
             return;
         }
 
-        tempEmail = email; // Usado para mostrar en la UI
-        errorDiv.textContent = 'Procesando...'; // Muestra el mensaje de procesamiento
+        tempEmail = email; 
+        errorDiv.textContent = 'Procesando...'; 
 
         try {
-            // Envía las credenciales. El servidor debe decidir si es registro (nuevo usuario) o login (existente).
             const response = await fetch(AUTH_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -309,12 +306,11 @@
             });
             
             const data = await response.json();
-            errorDiv.textContent = ''; // Limpiar mensaje de "Procesando"
+            errorDiv.textContent = ''; 
 
             if (response.ok) {
                 
                 if (data.token) {
-                    // Login o Registro completado con éxito
                     alert(data.message || '✅ Sesión iniciada con éxito.');
                     completarLogin(data.token, data.balance);
                 } else {
@@ -322,7 +318,6 @@
                 }
 
             } else {
-                // Error de servidor (ej: 401 Unauthorized, 400 Bad Request)
                 errorDiv.textContent = `❌ Error: ${data.message || 'Credenciales incorrectas o error en el servidor.'}`;
             }
         } catch (error) {
@@ -348,7 +343,6 @@
         if (!confirm('¿Estás seguro de que quieres cerrar la sesión?')) return;
 
         try {
-            // Notificar al servidor para invalidar el token
             await fetch(LOGOUT_URL, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${userToken}` }
@@ -377,7 +371,6 @@
             userToken = sessionStorage.getItem('authToken');
             emailRegistrado = sessionStorage.getItem('userEmail');
             
-            // **Paso 1: Verificar el token con el servidor y obtener saldo**
             try {
                 const response = await fetch(GET_BALANCE_URL, {
                     method: 'GET',
@@ -389,12 +382,10 @@
                     saldoUsuario = data.balance;
                     sessionStorage.setItem('userBalance', saldoUsuario.toFixed(2));
                 } else if (response.status === 401) {
-                    // Token expirado o inválido, forzar logout
                     cerrarSesion();
                     return;
                 }
             } catch (error) {
-                // Error de red, usar saldo local guardado
                 saldoUsuario = parseFloat(sessionStorage.getItem('userBalance')) || 0;
             }
 
@@ -433,7 +424,6 @@
         resultadoDiv.innerHTML = `<span style="color: var(--color-secondary);">Procesando pago por ${formaPago}...</span>`;
 
         try {
-            // **Paso 1: Envío real al servidor para registrar y procesar la recarga**
             const response = await fetch(RECHARGE_URL, {
                 method: 'POST',
                 headers: { 
@@ -446,7 +436,6 @@
             const data = await response.json();
 
             if (response.ok) {
-                // El servidor debe devolver el nuevo saldo tras registrar el pago
                 saldoUsuario = data.newBalance;
                 actualizarSaldoUI(); 
 
@@ -468,19 +457,16 @@
     // --- Funciones de Compra (Conexión REAL al Servidor) ---
     
     async function procesarCompra() {
-        // ... (Validaciones de tarjeta omitidas para brevedad, pero deberían estar aquí) ...
         const resultadoDiv = document.getElementById('pago-resultado');
         const overlay = document.getElementById('loading-overlay');
         overlay.style.display = 'flex';
         resultadoDiv.textContent = 'Iniciando proceso de autenticación 3D Secure...';
         
-        // Simulación de tiempo de 3D Secure (5 segundos)
         await new Promise(resolve => setTimeout(resolve, 5000));
         overlay.style.display = 'none';
         resultadoDiv.textContent = '3D Secure completado. Finalizando compra...';
 
         try {
-            // **Paso 1: Enviar la solicitud de compra al servidor**
             const response = await fetch(PURCHASE_URL, {
                 method: 'POST',
                 headers: { 
@@ -489,7 +475,6 @@
                 },
                 body: JSON.stringify({ 
                     cost: montoCompra, 
-                    // Enviar datos de la TDC para procesar
                     card_number: document.getElementById('numero-tarjeta').value,
                     card_holder: document.getElementById('nombre-tarjeta').value,
                 })
@@ -498,33 +483,16 @@
             const data = await response.json();
 
             if (response.ok) {
-                // El servidor descuenta el saldo y registra la venta
                 saldoUsuario = data.newBalance;
                 actualizarSaldoUI();
-                montoCompra = 0; // Limpiar carrito
+                montoCompra = 0; 
                 document.getElementById('seccion-pago').style.display = 'none';
 
-                resultadoDiv.innerHTML = `
-                    <span style="color: var(--color-success); font-size: 1.1em; font-weight: bold;">
-                        ✅ COMPRA EXITOSA!
-                    </span>
-                    <br>
-                    <span style="font-size: 0.9em; color: var(--color-text);">
-                        Tu saldo ha sido descontado. Los datos de la tarjeta comprada han sido enviados a tu correo: ${emailRegistrado}.
-                    </span>
-                `;
+                resultadoDiv.innerHTML = `<span style="color: var(--color-success); font-size: 1.1em; font-weight: bold;">✅ COMPRA EXITOSA!</span>`;
                 alert('✅ Compra Exitosa. Revisa tu correo.');
 
             } else {
-                resultadoDiv.innerHTML = `
-                    <span style="color: var(--color-danger); font-size: 1.1em; font-weight: bold;">
-                        ❌ TRANSACCIÓN RECHAZADA.
-                    </span>
-                    <br>
-                    <span style="font-size: 0.9em; color: var(--color-text);">
-                        ${data.message || 'Fallo en la validación o saldo insuficiente.'}
-                    </span>
-                `;
+                resultadoDiv.innerHTML = `<span style="color: var(--color-danger); font-size: 1.1em; font-weight: bold;">❌ TRANSACCIÓN RECHAZADA.</span>`;
             }
         } catch (error) {
             console.error('Error en el proceso de compra:', error);
