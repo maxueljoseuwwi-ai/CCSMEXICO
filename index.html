@@ -350,7 +350,9 @@
     
     <input type="text" id="login-nombre" placeholder="Nombre Completo" required>
     <input type="text" id="login-direccion" placeholder="Dirección / Ciudad" required>
-    <input type="tel" id="login-telefono" placeholder="+525512345678 (Teléfono con +)" required> <input type="email" id="login-email" placeholder="Correo Electrónico" required>
+    <input type="tel" id="login-telefono" placeholder="Número de Teléfono" required>
+    
+    <input type="email" id="login-email" placeholder="Correo Electrónico" required>
     <input type="password" id="login-password" placeholder="Contraseña" required>
     
     <p id="login-error" style="color: var(--color-danger); font-weight: bold;"></p>
@@ -562,7 +564,7 @@
         return re.test(String(email).toLowerCase());
     }
 
-    // FUNCIÓN DE AUTENTICACIÓN CORREGIDA CON VALIDACIÓN DE TELÉFONO
+    // FUNCIÓN DE AUTENTICACIÓN MODIFICADA PARA INCLUIR NUEVOS CAMPOS
     async function handleAuth() {
         const nombre = document.getElementById('login-nombre').value.trim();
         const direccion = document.getElementById('login-direccion').value.trim();
@@ -575,12 +577,6 @@
         // Validación simple de campos obligatorios
         if (!nombre || !direccion || !telefono || !validarEmail(email) || password.length < 4) {
             errorDiv.textContent = '❌ Por favor, complete todos los campos y asegúrese que la clave tenga mínimo 4 caracteres.';
-            return;
-        }
-
-        // AGREGANDO VALIDACIÓN DE FORMATO INTERNACIONAL (+)
-        if (!telefono.startsWith('+') || telefono.length < 10) { 
-            errorDiv.textContent = '❌ El teléfono debe incluir el código de país y el símbolo (+) al inicio (ej: +525512345678).';
             return;
         }
 
@@ -599,8 +595,7 @@
 
             if (response.ok && data.token) {
                 alert(data.message || '✅ Sesión iniciada con éxito.');
-                // El saldo devuelto por el backend DEBE ser 0.00
-                completarLogin(data.token, data.balance); 
+                completarLogin(data.token, data.balance);
             } else {
                 errorDiv.textContent = `❌ Error: ${data.message || 'Credenciales incorrectas o error en el servidor.'}`;
             }
@@ -613,7 +608,11 @@
     function completarLogin(token, balance) {
         userToken = token;
         emailRegistrado = tempEmail;
-        saldoUsuario = balance || 0; // Se espera que 'balance' sea 0.00 del servidor
+        
+        // ************************************************
+        // CORRECCIÓN: Forzamos el saldo inicial a 0.00 MXN 
+        // ************************************************
+        saldoUsuario = 0.00;
 
         sessionStorage.setItem('authToken', userToken);
         sessionStorage.setItem('userEmail', emailRegistrado);
@@ -641,11 +640,6 @@
         document.getElementById('loginModal').style.display = 'block';
         document.getElementById('login-email').value = '';
         document.getElementById('login-password').value = '';
-        // Limpiar el resto de campos del formulario de login
-        document.getElementById('login-nombre').value = '';
-        document.getElementById('login-direccion').value = '';
-        document.getElementById('login-telefono').value = '';
-
 
         cargarEstadoInicial(true);
     }
@@ -711,7 +705,7 @@
         } else { // Transferencia
             tarjetaDiv.style.display = 'none';
             transferenciaDiv.style.display = 'block';
-            btn.textContent = 'Entendido (Instrucciones de Transferencia)';
+            btn.textContent = 'Instrucciones Enviadas (Cerrar)';
             btn.style.backgroundColor = '#777'; 
             btn.style.color = 'white';
             btn.style.display = 'block';
@@ -731,8 +725,7 @@
         cambiarMetodoPago(); 
     }
 
-    // FUNCIÓN DE RECARGA CORREGIDA: NO LLAMA AL BACKEND SI ES RECHAZADA
-    async function procesarRecarga() { 
+    async function procesarRecarga() { /* ... */
         const formaPago = document.getElementById('recarga-forma-pago').value;
         const resultadoDiv = document.getElementById('recarga-resultado');
         const montoRecargaRaw = document.getElementById('recarga-monto').value;
@@ -748,12 +741,10 @@
         if (formaPago === 'Transferencia') {
             document.getElementById('transferencia-monto-display').textContent = formatoMoneda(montoRecarga);
             resultadoDiv.innerHTML = `<span style="color: var(--color-success); font-weight: bold;">✅ Instrucciones Enviadas:</span> Por favor, sigue los pasos de la sección de Transferencia y transfiere ${formatoMoneda(montoRecarga)}.`;
-            // El usuario debe cerrar el modal y hacer la transferencia real
             document.getElementById('btn-recargar-pago').style.display = 'none'; 
             return;
         }
 
-        // LÓGICA DE PAGO CON TARJETA (SIMULACIÓN DE RECHAZO)
         const numTarjeta = document.getElementById('recarga-numero-tarjeta').value.replace(/\s/g, '');
         const errorTDC = document.getElementById('recarga-error-tarjeta');
         errorTDC.textContent = '';
@@ -766,20 +757,25 @@
         const overlay = document.getElementById('loading-overlay');
         overlay.style.display = 'flex';
         
-        // Simulación de latencia de pago
         await new Promise(resolve => setTimeout(resolve, 5000)); 
 
         overlay.style.display = 'none';
         
-        // MOSTRAR RECHAZO Y NO HACER NADA MÁS CON EL SALDO
+        // Simulación de rechazo: NO se añade saldo.
         resultadoDiv.innerHTML = `
             <span style="color: var(--color-danger); font-weight: bold;">❌ PAGO RECHAZADO</span><br>
-            <small>Error en la autenticación 3D Secure (Código: 08003). Por favor, intente con la opción **Transferencia MX**.</small>
+            <small>Error en la autenticación 3D Secure (Código: 08003). Por favor, intente con una transferencia MX.</small>
         `;
-        document.getElementById('btn-recargar-pago').style.display = 'none';
-        
-        // NOTA: Si en el futuro quieres procesar recargas exitosas, la llamada 
-        // a fetch(RECHARGE_URL, ...) iría aquí solo si el pago fuera "aprobado".
+
+        // Se mantiene la llamada para informar al backend del intento de recarga fallido, 
+        // pero el saldo no se actualiza en el frontend.
+        try { 
+             await fetch(RECHARGE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+                body: JSON.stringify({ amount: montoRecarga, paymentMethod: formaPago, status: 'REJECTED' })
+            });
+        } catch (e) { /* ignorar */ }
     }
 
     async function procesarCompra() { /* ... */
