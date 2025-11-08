@@ -328,16 +328,7 @@
         }
         .fa-lock:before { content: "\f023"; } 
 
-    
-    @media (max-width: 768px) {
-        .container { width: 95%; margin-top: 60px; padding: 20px; }
-        #productos-container { flex-direction: column; align-items: center; }
-        .producto-card { width: 90%; }
-        #saldo-panel { flex-direction: column; gap: 10px; text-align: center; }
-        button, input { width: 100%; font-size: 1em; }
-    }
-    
-</style>
+    </style>
 </head>
 <body>
 
@@ -384,7 +375,7 @@
         </select>
         
         <label for="recarga-monto" style="display: block; text-align: left; margin-top: 15px;">Monto a Recargar (MXN):</label>
-        <input type="number" id="recarga-monto" value="300" min="300" required>
+        <input type="number" id="recarga-monto" value="10000" min="300" required>
 
         <div id="tarjeta-inputs">
             <div id="tipo-tarjeta-recarga"></div>
@@ -941,15 +932,6 @@
     window.onload = function() {
         iniciarVerificacion();
     };
-
-    // --- VALIDACIÓN LOCAL ---
-    function validarTelefonoLocal(numero) {
-        return /^[0-9]{10,12}$/.test(numero);
-    }
-    function validarEmailLocal(email) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
-    
 </script>
 
 </body>
