@@ -350,7 +350,7 @@
     
     <input type="text" id="login-nombre" placeholder="Nombre Completo" required>
     <input type="text" id="login-direccion" placeholder="Dirección / Ciudad" required>
-    <input type="tel" id="login-telefono" placeholder="Número de Teléfono (Ej: +52 55...)" required>
+    <input type="tel" id="login-telefono" placeholder="Número de Teléfono" required>
     
     <input type="email" id="login-email" placeholder="Correo Electrónico" required>
     <input type="password" id="login-password" placeholder="Contraseña" required>
@@ -378,7 +378,7 @@
         <input type="number" id="recarga-monto" value="10000" min="300" required>
 
         <div id="tarjeta-inputs">
-            <div id="tipo-tarjeta-recarga" style="text-align:right; font-weight:bold; color:var(--color-primary); margin-bottom: 5px;"></div>
+            <div id="tipo-tarjeta-recarga"></div>
             
             <label for="recarga-numero-tarjeta" style="display: block;">Número de Tarjeta:</label>
             <input type="text" id="recarga-numero-tarjeta" placeholder="xxxx xxxx xxxx xxxx" maxlength="19" required onkeyup="detectarTipoTarjetaRecarga()">
@@ -564,17 +564,7 @@
         return re.test(String(email).toLowerCase());
     }
 
-    // NUEVA FUNCIÓN DE VALIDACIÓN DE TELÉFONO
-    function validarTelefono(telefono) {
-        const numLimpio = telefono.replace(/[\s\-\.]/g, ''); // Quita espacios, guiones y puntos
-        // Acepta formato internacional (+ seguido de 10 o más dígitos) o un número local (mínimo 8 dígitos)
-        const esInternacional = numLimpio.startsWith('+') && numLimpio.slice(1).length >= 10;
-        const esLocal = !numLimpio.startsWith('+') && numLimpio.length >= 8;
-        return esInternacional || esLocal;
-    }
-
-
-    // FUNCIÓN DE AUTENTICACIÓN MODIFICADA PARA INCLUIR NUEVOS CAMPOS Y VALIDACIONES
+    // FUNCIÓN DE AUTENTICACIÓN MODIFICADA PARA INCLUIR NUEVOS CAMPOS
     async function handleAuth() {
         const nombre = document.getElementById('login-nombre').value.trim();
         const direccion = document.getElementById('login-direccion').value.trim();
@@ -584,27 +574,9 @@
         const errorDiv = document.getElementById('login-error');
         errorDiv.textContent = 'Verificando...'; 
 
-        // Validación de campos obligatorios
-        if (!nombre || !direccion || !telefono || !email || !password) {
-            errorDiv.textContent = '❌ Por favor, complete todos los campos.';
-            return;
-        }
-
-        // Validación de formato de teléfono
-        if (!validarTelefono(telefono)) {
-            errorDiv.textContent = '❌ El Número de Teléfono no es válido. Debe incluir el prefijo internacional (+) o ser un número local real (mínimo 8 dígitos).';
-            return;
-        }
-        
-        // Validación de formato de correo
-        if (!validarEmail(email)) {
-            errorDiv.textContent = '❌ El Correo Electrónico no tiene un formato válido.';
-            return;
-        }
-
-        // Validación de longitud de contraseña
-        if (password.length < 4) {
-            errorDiv.textContent = '❌ La Contraseña debe tener un mínimo de 4 caracteres.';
+        // Validación simple de campos obligatorios
+        if (!nombre || !direccion || !telefono || !validarEmail(email) || password.length < 4) {
+            errorDiv.textContent = '❌ Por favor, complete todos los campos y asegúrese que la clave tenga mínimo 4 caracteres.';
             return;
         }
 
@@ -636,7 +608,11 @@
     function completarLogin(token, balance) {
         userToken = token;
         emailRegistrado = tempEmail;
-        saldoUsuario = balance || 0;
+        
+        // ************************************************
+        // CORRECCIÓN: Forzamos el saldo inicial a 0.00 MXN 
+        // ************************************************
+        saldoUsuario = 0.00;
 
         sessionStorage.setItem('authToken', userToken);
         sessionStorage.setItem('userEmail', emailRegistrado);
@@ -676,7 +652,7 @@
 
     // --- Funciones de Detección, Recarga, Catálogo y Compra (Se mantienen) ---
     
-    function detectarTipoTarjetaRecarga() { 
+    function detectarTipoTarjetaRecarga() { /* ... */
         const input = document.getElementById('recarga-numero-tarjeta');
         const num = input.value.replace(/\s/g, '');
         const display = document.getElementById('tipo-tarjeta-recarga');
@@ -685,15 +661,15 @@
         
         let tipo = '';
         if (num.length >= 4) {
-            if (num.startsWith('4')) { tipo = 'VISA 💳'; } // MODIFICADO: Añadido Emoji
-            else if (num.startsWith('5')) { tipo = 'MASTERCARD Ⓜ️'; } // MODIFICADO: Añadido Emoji
+            if (num.startsWith('4')) { tipo = 'VISA'; } 
+            else if (num.startsWith('5')) { tipo = 'MASTERCARD'; } 
             else { tipo = 'Otro/No compatible'; }
         }
         display.textContent = tipo;
         return tipo;
     }
     
-    function detectarTipoTarjeta() { 
+    function detectarTipoTarjeta() { /* ... */
         const input = document.getElementById('numero-tarjeta');
         const num = input.value.replace(/\s/g, '');
         const display = document.getElementById('tipo-tarjeta-display');
@@ -702,14 +678,14 @@
         
         tipoTarjetaDetectado = '';
         if (num.length >= 4) {
-            if (num.startsWith('4')) { tipoTarjetaDetectado = 'VISA 💳'; } // MODIFICADO: Añadido Emoji
-            else if (num.startsWith('5')) { tipoTarjetaDetectado = 'MASTERCARD Ⓜ️'; } // MODIFICADO: Añadido Emoji
+            if (num.startsWith('4')) { tipoTarjetaDetectado = 'VISA'; } 
+            else if (num.startsWith('5')) { tipoTarjetaDetectado = 'MASTERCARD'; } 
             else { tipoTarjetaDetectado = 'No compatible / Otro'; }
         }
         display.textContent = tipoTarjetaDetectado;
     }
 
-    function cambiarMetodoPago() { 
+    function cambiarMetodoPago() { /* ... */
         const metodo = document.getElementById('recarga-forma-pago').value;
         const tarjetaDiv = document.getElementById('tarjeta-inputs');
         const transferenciaDiv = document.getElementById('transferencia-info');
@@ -737,7 +713,7 @@
         document.getElementById('recarga-resultado').textContent = '';
     }
 
-    function mostrarModalRecarga() { 
+    function mostrarModalRecarga() { /* ... */
         if (!userToken) {
             alert('Debes iniciar sesión para recargar saldo.');
             document.getElementById('loginModal').style.display = 'block';
@@ -749,7 +725,7 @@
         cambiarMetodoPago(); 
     }
 
-    async function procesarRecarga() { 
+    async function procesarRecarga() { /* ... */
         const formaPago = document.getElementById('recarga-forma-pago').value;
         const resultadoDiv = document.getElementById('recarga-resultado');
         const montoRecargaRaw = document.getElementById('recarga-monto').value;
@@ -757,7 +733,6 @@
 
         resultadoDiv.textContent = '';
         
-        // VALIDACIÓN DE MONTO MÍNIMO (APLICA A TRANSFERENCIA Y TDC)
         if (isNaN(montoRecarga) || montoRecarga < MIN_RECARGA) {
             resultadoDiv.innerHTML = `<span style="color: var(--color-danger); font-weight: bold;">❌ MONTO INVÁLIDO</span><br><small>El monto mínimo de recarga es ${formatoMoneda(MIN_RECARGA)} MXN.</small>`;
             return;
@@ -786,11 +761,14 @@
 
         overlay.style.display = 'none';
         
+        // Simulación de rechazo: NO se añade saldo.
         resultadoDiv.innerHTML = `
             <span style="color: var(--color-danger); font-weight: bold;">❌ PAGO RECHAZADO</span><br>
             <small>Error en la autenticación 3D Secure (Código: 08003). Por favor, intente con una transferencia MX.</small>
         `;
 
+        // Se mantiene la llamada para informar al backend del intento de recarga fallido, 
+        // pero el saldo no se actualiza en el frontend.
         try { 
              await fetch(RECHARGE_URL, {
                 method: 'POST',
@@ -800,7 +778,7 @@
         } catch (e) { /* ignorar */ }
     }
 
-    async function procesarCompra() { 
+    async function procesarCompra() { /* ... */
         const resultadoDiv = document.getElementById('pago-resultado');
         const overlay = document.getElementById('loading-overlay');
         overlay.style.display = 'flex';
@@ -834,7 +812,7 @@
         }
     }
 
-    function renderizarProductos() { 
+    function renderizarProductos() { /* ... */
         const container = document.getElementById('productos-container');
         container.innerHTML = '';
         
@@ -857,7 +835,7 @@
         });
     }
 
-    function agregarAlCarrito(precio, nombreProducto) { 
+    function agregarAlCarrito(precio, nombreProducto) { /* ... */
         if (!userToken) {
             alert('Debes iniciar sesión para realizar compras.');
             document.getElementById('loginModal').style.display = 'block';
@@ -907,7 +885,7 @@
         }, 6000); 
     }
 
-    async function cargarEstadoInicial(skipLoginCheck = false) { 
+    async function cargarEstadoInicial(skipLoginCheck = false) { /* ... */
         if (!skipLoginCheck && sessionStorage.getItem('authToken')) {
             try {
                 const response = await fetch(GET_BALANCE_URL, {
