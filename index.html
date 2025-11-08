@@ -239,7 +239,7 @@
             cursor: pointer;
             font-weight: bold;
         }
-        .modal-content button:hover { background-color: #FFD700; color: var(--color-secondary);} 
+        .modal-content button:hover { background-color: #FFD700; color: var(--color-secondary);}
         
         /* Estilos de Carga Inicial */
         #initial-loading-screen {
@@ -328,19 +328,6 @@
         }
         .fa-lock:before { content: "\f023"; } 
 
-        /* --- Responsive: mejoras para celular --- */
-        @media (max-width: 768px) {
-            .container { margin: 60px 12px 20px 12px; padding: 18px; }
-            .header h1 { font-size: 1.8em; }
-            #saldo-panel { flex-direction: column; gap: 10px; align-items: flex-start; }
-            .producto-card { width: 100%; max-width: 420px; }
-            .producto-card img { width: 100%; }
-            .modal-content { width: 95%; max-width: 460px; padding: 20px; }
-            #security-bar { font-size: 0.85em; padding: 6px 0; }
-            .modal-content input, .modal-content select { width: 95%; }
-            #recargar-btn, #logout-btn { padding: 10px 14px; }
-        }
-
     </style>
 </head>
 <body>
@@ -363,7 +350,7 @@
     
     <input type="text" id="login-nombre" placeholder="Nombre Completo" required>
     <input type="text" id="login-direccion" placeholder="Dirección / Ciudad" required>
-    <input type="tel" id="login-telefono" placeholder="Número de Teléfono (10-12 dígitos)" required>
+    <input type="tel" id="login-telefono" placeholder="Número de Teléfono" required>
     
     <input type="email" id="login-email" placeholder="Correo Electrónico" required>
     <input type="password" id="login-password" placeholder="Contraseña" required>
@@ -388,8 +375,7 @@
         </select>
         
         <label for="recarga-monto" style="display: block; text-align: left; margin-top: 15px;">Monto a Recargar (MXN):</label>
-        <!-- Valor por defecto cambiado a 300 MXN -->
-        <input type="number" id="recarga-monto" value="300" min="300" required>
+        <input type="number" id="recarga-monto" value="10000" min="300" required>
 
         <div id="tarjeta-inputs">
             <div id="tipo-tarjeta-recarga"></div>
@@ -413,9 +399,9 @@
             <p id="recarga-error-tarjeta" style="color: var(--color-danger); font-weight: bold;"></p>
         </div>
         
-        <div id="transferencia-info" style="display: none; text-align: left;">
+        <div id="transferencia-info" style="display: none;">
             <h4>Instrucciones para Transferencia MX (SPEI)</h4>
-            <p>1. Realice una transferencia del monto ingresado (<span id="transferencia-monto-display" style="font-weight: bold;">$300 MXN</span>) a la siguiente cuenta:</p>
+            <p>1. Realice una transferencia del monto ingresado (<span id="transferencia-monto-display" style="font-weight: bold;">$10,000 MXN</span>) a la siguiente cuenta:</p>
             <ul>
                 <li>**Banco:** BBVA Bancomer</li>
                 <li>**CLABE:** 001180180000000001</li>
@@ -578,29 +564,6 @@
         return re.test(String(email).toLowerCase());
     }
 
-    // Nueva función para verificar formato de teléfono (sólo validación local)
-    function validarTelefono(telefono) {
-        const re = /^\d{10,12}$/; // acepta 10 a 12 dígitos numéricos (México: 10)
-        return re.test(String(telefono).replace(/\s|\-|\(|\)/g, ''));
-    }
-
-    // Función que intenta consultar al backend para verificar si el correo/teléfono existen (si el backend soporta esto)
-    async function verificarContactoBackend(email, telefono) {
-        try {
-            const res = await fetch(`${BASE_URL}/verify-contact`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, telefono })
-            });
-            if (!res.ok) return { ok: false, message: 'No se pudo verificar el contacto en el servidor.' };
-            const data = await res.json();
-            // Se espera que el backend devuelva { valid: true/false, message: '...' }
-            return { ok: true, valid: !!data.valid, message: data.message || '' };
-        } catch (e) {
-            return { ok: false, message: 'Error de red al verificar contacto.' };
-        }
-    }
-
     // FUNCIÓN DE AUTENTICACIÓN MODIFICADA PARA INCLUIR NUEVOS CAMPOS
     async function handleAuth() {
         const nombre = document.getElementById('login-nombre').value.trim();
@@ -617,24 +580,7 @@
             return;
         }
 
-        // Validación local del teléfono
-        if (!validarTelefono(telefono)) {
-            errorDiv.textContent = '❌ Formato de teléfono inválido. Ingrese sólo dígitos (10 a 12 números).';
-            return;
-        }
-
         tempEmail = email; 
-
-        // Intentar verificar contacto en backend (si existe endpoint). Si el endpoint no existe, se informa al usuario.
-        const verif = await verificarContactoBackend(email, telefono);
-        if (!verif.ok) {
-            errorDiv.textContent = `❌ No se pudo verificar el correo/teléfono: ${verif.message} `;
-            return;
-        }
-        if (!verif.valid) {
-            errorDiv.textContent = '❌ El correo o el número parecen no estar registrados/validos. Por favor verifique y vuelva a intentar.';
-            return;
-        }
 
         try {
             const response = await fetch(AUTH_URL, {
@@ -746,7 +692,7 @@
         const btn = document.getElementById('btn-recargar-pago');
         
         const montoInput = parseFloat(document.getElementById('recarga-monto').value);
-        const montoDisplay = formatoMoneda(isNaN(montoInput) ? MIN_RECARGA : montoInput);
+        const montoDisplay = formatoMoneda(isNaN(montoInput) ? 0 : montoInput);
         document.getElementById('transferencia-monto-display').textContent = montoDisplay;
 
         if (metodo === 'TDC') {
@@ -776,8 +722,6 @@
         document.getElementById('recargaModal').style.display = 'block';
         document.getElementById('recarga-resultado').textContent = '';
         document.getElementById('recarga-forma-pago').value = 'TDC';
-        // Forzamos el valor mínimo visible al abrir modal
-        document.getElementById('recarga-monto').value = MIN_RECARGA;
         cambiarMetodoPago(); 
     }
 
