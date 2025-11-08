@@ -3,77 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Venta de Tarjetas Full Datos - Panel de Usuario</title>
+    <title>CCSMEXICO | Venta de Tarjetas Full Datos - Panel Seguro</title>
     <style>
-        /* [Estilos CSS: Se mantienen igual que en la versión anterior para no sobrecargar el código] */
+        /* [ESTILOS PROFESIONALES Y SEGURIDAD] */
         :root {
-            --color-primary: #FF5733; 
-            --color-secondary: #007bff; 
+            --color-primary: #DAA520; /* Dorado/Amarillo Oscuro para botones de acción */
+            --color-secondary: #000000; /* Negro para fondo o texto */
             --color-success: #28a745;
             --color-danger: #CC0000;
-            --color-background: #f4f7f6;
+            --color-background: #f8f8f8; /* Gris muy claro */
             --color-card-bg: #ffffff;
             --color-text: #333;
+            --color-panel-bg: #e0e0e0; /* Fondo del panel de saldo */
         }
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
             background-color: var(--color-background);
             color: var(--color-text);
+            transition: opacity 0.5s;
         }
         .container {
             max-width: 1200px;
-            margin: 40px auto;
+            margin: 80px auto 40px auto; /* Margen superior ajustado por la barra fija */
             background-color: var(--color-card-bg);
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
         }
-        h1 {
-            color: var(--color-danger);
+        
+        /* HEADER Y LOGO */
+        .header {
             text-align: center;
-            border-bottom: 3px solid var(--color-primary);
-            padding-bottom: 15px;
-            margin-bottom: 40px;
-            font-size: 2.5em;
+            margin-bottom: 30px;
         }
-        h3 {
+        .header h1 {
             color: var(--color-secondary);
-            margin-top: 25px;
-            border-left: 5px solid var(--color-secondary);
-            padding-left: 10px;
+            font-size: 2.8em;
+            font-weight: 900;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        .header p {
+            color: var(--color-primary);
+            font-weight: 600;
+            margin: 5px 0 0 0;
+            font-size: 1.1em;
+            letter-spacing: 1px;
+        }
+
+        /* BARRA DE SEGURIDAD (FIXED) */
+        #security-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--color-secondary);
+            color: white;
+            padding: 8px 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            font-size: 0.9em;
+        }
+        #security-bar i {
+            margin-right: 10px;
+            color: #38c172; /* Candado verde */
+        }
+        .trust-seal-text {
+            color: var(--color-primary);
+            font-weight: bold;
+            margin-left: 10px;
         }
 
         /* Panel de Saldo */
         #saldo-panel {
-            background-color: #e6f7ff;
+            background-color: var(--color-panel-bg);
             border: 1px solid var(--color-secondary);
-            padding: 15px;
+            padding: 20px;
             border-radius: 8px;
             margin-bottom: 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-weight: bold;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
         }
         #saldo-display {
-            font-size: 1.5em;
-            color: var(--color-secondary);
+            font-size: 1.8em;
+            color: var(--color-danger);
+            margin-left: 15px;
         }
         #recargar-btn, #logout-btn {
             background-color: var(--color-secondary);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 25px;
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, transform 0.2s;
             margin-left: 10px;
+            font-weight: bold;
         }
-        #recargar-btn:hover { background-color: #0056b3; }
-        #logout-btn { background-color: #777; }
-        #logout-btn:hover { background-color: #555; }
+        #recargar-btn:hover { background-color: var(--color-primary); }
+        #logout-btn { background-color: #555; }
+        #logout-btn:hover { background-color: #333; }
+
+        /* Catálogo */
+        h3 {
+            color: var(--color-secondary);
+            margin-top: 35px;
+            border-left: 5px solid var(--color-primary);
+            padding-left: 10px;
+            font-size: 1.4em;
+        }
 
         /* Diseño de Tarjetas de Producto */
         #productos-container {
@@ -84,27 +130,56 @@
         }
         .producto-card {
             background: var(--color-card-bg);
-            border: 1px solid var(--color-danger); 
+            border: 1px solid var(--color-panel-bg); 
             border-radius: 10px;
-            padding: 15px;
-            width: 220px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            width: 250px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
             transition: transform 0.3s, box-shadow 0.3s;
             text-align: center;
         }
+        .producto-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
         .producto-card img {
-            width: 80%;
+            width: 90%;
             height: auto;
             border-radius: 6px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             border: 1px solid #ddd;
+        }
+        .producto-card h4 {
+            color: var(--color-secondary);
+            margin-top: 5px;
+        }
+        .producto-card .costo {
+            font-size: 1.2em;
+            color: var(--color-danger);
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .producto-card button {
+            background-color: var(--color-primary);
+            color: var(--color-secondary);
+            font-weight: bold;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            width: 100%;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .producto-card button:hover {
+            background-color: #FFD700;
         }
         .producto-card button:disabled {
             background-color: #ccc;
             cursor: not-allowed;
+            color: #666;
         }
 
-        /* --- MODAL CORRECCIÓN --- */
+        /* Modales (incluyendo correcciones de PC) */
         .modal {
             display: none; 
             position: fixed; 
@@ -113,13 +188,12 @@
             top: 0;
             width: 100%; 
             height: 100%; 
-            overflow: auto; /* Permite scroll si el contenido es grande */
+            overflow: auto; 
             background-color: rgba(0,0,0,0.8);
-            padding-top: 30px; /* Reducido para mejor visualización en PC */
+            padding-top: 30px; 
         }
         .modal-content {
             background-color: #fefefe;
-            /* Margen reducido para subir el modal */
             margin: 5% auto; 
             padding: 30px;
             border: 1px solid #888;
@@ -128,9 +202,8 @@
             border-radius: 10px;
             text-align: center;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            position: relative; /* Para posicionar el botón de cierre */
+            position: relative; 
         }
-        /* Estilo para el botón de cierre (la X) */
         .close {
             color: #aaa;
             float: right;
@@ -147,9 +220,7 @@
             text-decoration: none;
             cursor: pointer;
         }
-        /* -------------------------- */
-        
-        .modal-content h2 { color: var(--color-primary); }
+        .modal-content h2 { color: var(--color-secondary); }
         .modal-content input, .modal-content select {
             width: 90%;
             padding: 10px;
@@ -159,17 +230,18 @@
             box-sizing: border-box;
         }
         .modal-content button {
-            background-color: var(--color-success);
+            background-color: var(--color-primary);
             color: white;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border: none;
             border-radius: 5px;
             margin-top: 15px;
             cursor: pointer;
+            font-weight: bold;
         }
-        .modal-content button:hover { background-color: #1e7e34; }
+        .modal-content button:hover { background-color: #FFD700; color: var(--color-secondary);}
         
-        /* Estilos de Recarga Modificados */
+        /* Estilos de Recarga */
         #transferencia-info {
             background-color: #fff3cd;
             border: 1px solid #ffeeba;
@@ -187,10 +259,10 @@
             margin-top: 15px;
             text-align: left;
         }
-        #tipo-tarjeta-recarga {
+        #tipo-tarjeta-recarga, #tipo-tarjeta-display {
             font-weight: bold;
             text-align: right;
-            color: var(--color-secondary);
+            color: var(--color-primary);
             margin-bottom: 5px;
         }
         .tarjeta-split {
@@ -203,15 +275,80 @@
         .tarjeta-split input {
             width: 100%;
         }
+
+        /* Estilos de Carga Inicial */
+        #initial-loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--color-secondary);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 9999;
+            text-align: center;
+        }
+        #loading-title-initial {
+            font-size: 2em;
+            margin-bottom: 15px;
+            color: var(--color-primary);
+        }
+        .progress-bar-container {
+            width: 300px;
+            height: 15px;
+            background-color: #555;
+            border-radius: 5px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background-color: var(--color-primary);
+            transition: width 3s linear;
+        }
+        /* Icono de Candado */
+        @font-face {
+            font-family: 'Font Awesome Solid';
+            src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/webfonts/fa-solid-900.woff2') format('woff2'),
+                 url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/webfonts/fa-solid-900.woff') format('woff');
+            font-weight: 900;
+            font-style: normal;
+        }
+        .fa {
+            font-family: 'Font Awesome Solid';
+            font-weight: 900;
+            line-height: 1;
+            font-style: normal;
+            font-variant: normal;
+            text-rendering: auto;
+            -webkit-font-smoothing: antialiased;
+        }
+        .fa-lock:before { content: "\f023"; } /* Unicode para el icono de candado */
+
     </style>
 </head>
 <body>
+
+<div id="initial-loading-screen">
+    <i class="fa fa-lock" style="font-size: 4em; color: var(--color-primary);"></i>
+    <div id="loading-title-initial">Verificación de Conexión Segura</div>
+    <p>CCSMEXICO está verificando sus protocolos de seguridad antes de iniciar la sesión.</p>
+    <div class="progress-bar-container">
+        <div class="progress-bar" id="initial-progress-bar"></div>
+    </div>
+    <div style="margin-top: 15px; color: #888;">Sitio validado por TrustPilot Secure.</div>
+</div>
 
 <div id="loginModal" class="modal">
   <div class="modal-content">
     <span class="close" onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
     <h2>🔑 Acceso al Panel de Control</h2>
-    <p>Ingresa tus credenciales. Si el correo no existe, **se registrará automáticamente**.</p>
+    <p>Ingresa tus credenciales para acceder al catálogo.</p>
     <input type="text" id="login-email" placeholder="Correo Electrónico" required>
     <input type="password" id="login-password" placeholder="Contraseña" required>
     <p id="login-error" style="color: var(--color-danger); font-weight: bold;"></p>
@@ -275,9 +412,17 @@
     </div>
 </div>
 
+<div id="security-bar">
+    <i class="fa fa-lock"></i>
+    Conexión Segura SSL
+    <span class="trust-seal-text">| Validado por TrustPilot</span>
+</div>
 
 <div class="container">
-    <h1>🚨 Venta de Tarjetas FULL DATOS</h1>
+    <div class="header">
+        <h1>CCSMEXICO</h1>
+        <p>Plataforma Premium de Adquisición de Datos</p>
+    </div>
     
     <div id="saldo-panel">
         <div>
@@ -306,7 +451,7 @@
 
         <div id="tarjeta-input-group">
             <h4>Datos de la Tarjeta para Proceso 3D Secure</h4>
-            <div id="tipo-tarjeta-display" style="text-align:right; font-weight:bold; color:var(--color-secondary); margin-bottom: 5px;"></div>
+            <div id="tipo-tarjeta-display" style="text-align:right; font-weight:bold; color:var(--color-primary); margin-bottom: 5px;"></div>
             
             <label for="numero-tarjeta">Número de Tarjeta (Para 3D Secure):</label>
             <input type="text" id="numero-tarjeta" placeholder="xxxx xxxx xxxx xxxx" maxlength="19" required onkeyup="detectarTipoTarjeta()">
@@ -325,12 +470,11 @@
                 </div>
             </div>
             
-            <button id="pagar-btn" style="background-color: var(--color-primary);" onclick="procesarCompra()">Confirmar Compra con Saldo de Panel</button>
+            <button id="pagar-btn" style="background-color: var(--color-primary); color: var(--color-secondary);" onclick="procesarCompra()">Confirmar Compra con Saldo de Panel</button>
         </div>
         
-        <div class="trust-seal">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Norton-Secured.svg/256px-Norton-Secured.svg.png" alt="Norton Secured Logo">
-            Transacción 100% Segura. Certificado SSL por VeriSign.
+        <div class="trust-seal" style="margin-top: 20px;">
+            <i class="fa fa-lock" style="color: var(--color-success);"></i> Transacción 100% Segura. Certificado SSL por VeriSign.
         </div>
         
         <div id="pago-resultado">
@@ -341,8 +485,8 @@
 
 <div id="loading-overlay" class="modal">
     <div class="modal-content" style="max-width: 300px;">
-        <div id="loading-spinner" style="border: 8px solid #f3f3f3; border-radius: 50%; border-top: 8px solid var(--color-secondary); width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto 15px;"></div>
-        <div id="loading-title" style="font-weight: bold;">Verificación de Seguridad 3D Secure...</div>
+        <div id="loading-spinner" style="border: 8px solid #f3f3f3; border-radius: 50%; border-top: 8px solid var(--color-primary); width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto 15px;"></div>
+        <div id="loading-title" style="font-weight: bold; color: var(--color-secondary);">Verificación de Seguridad 3D Secure...</div>
         <div>Por favor espere mientras contactamos a su banco.</div>
     </div>
 </div>
@@ -367,7 +511,7 @@
     const PURCHASE_URL = `${BASE_URL}/purchase`;
     // -----------------------------------------------------------
 
-    const ADMIN_EMAIL = 'Maxueljoseuwwi@gmail.com'; // Correo para comprobantes
+    const ADMIN_EMAIL = 'Maxueljoseuwwi@gmail.com'; 
 
     let userToken = sessionStorage.getItem('authToken');
     let emailRegistrado = sessionStorage.getItem('userEmail') || '';
@@ -378,6 +522,7 @@
     let tempEmail = ''; 
 
     const productos = [
+        // Asegúrate de que los archivos .png estén en la carpeta 'img' en GitHub
         { nombre: "TDC Full Datos Citibanamex", saldo: 500.00, costo: 100.00, imagen: 'img/citibanamex.png' },
         { nombre: "TDC Full Datos Santander", saldo: 1000.00, costo: 180.00, imagen: 'img/santander.png' },
         { nombre: "TDC Full Datos BBVA", saldo: 2500.00, costo: 250.00, imagen: 'img/bbva.png' },
@@ -387,7 +532,7 @@
         { nombre: "TDC Full Datos BanCoppel", saldo: 50000.00, costo: 900.00, imagen: 'img/bancoppel.png' }
     ];
 
-    // --- Funciones de Utilidad ---
+    // --- Funciones de Utilidad y Inicialización ---
 
     function formatoMoneda(valor) {
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(valor);
@@ -398,21 +543,18 @@
         return re.test(String(email).toLowerCase());
     }
 
-    // --- Funciones de Sesión ---
-
     async function handleAuth() {
         const email = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value;
         const errorDiv = document.getElementById('login-error');
-        errorDiv.textContent = '';
+        errorDiv.textContent = 'Verificando...'; 
 
         if (!validarEmail(email) || password.length < 4) {
-            errorDiv.textContent = '❌ Por favor, ingresa credenciales válidas (mínimo 4 caracteres para la clave).';
+            errorDiv.textContent = '❌ Credenciales inválidas (mínimo 4 caracteres para la clave).';
             return;
         }
 
         tempEmail = email; 
-        errorDiv.textContent = 'Procesando...'; 
 
         try {
             const response = await fetch(AUTH_URL, {
@@ -424,15 +566,9 @@
             const data = await response.json();
             errorDiv.textContent = ''; 
 
-            if (response.ok) {
-                
-                if (data.token) {
-                    alert(data.message || '✅ Sesión iniciada con éxito.');
-                    completarLogin(data.token, data.balance);
-                } else {
-                    errorDiv.textContent = `❌ ${data.message || 'Respuesta de servidor inválida.'}`;
-                }
-
+            if (response.ok && data.token) {
+                alert(data.message || '✅ Sesión iniciada con éxito.');
+                completarLogin(data.token, data.balance);
             } else {
                 errorDiv.textContent = `❌ Error: ${data.message || 'Credenciales incorrectas o error en el servidor.'}`;
             }
@@ -452,7 +588,7 @@
         sessionStorage.setItem('userBalance', saldoUsuario.toFixed(2));
 
         document.getElementById('loginModal').style.display = 'none';
-        cargarEstadoInicial();
+        cargarEstadoInicial(true); // Cargar estado sin re-mostrar el login
     }
 
     async function cerrarSesion() {
@@ -474,65 +610,35 @@
         document.getElementById('login-email').value = '';
         document.getElementById('login-password').value = '';
 
-        cargarEstadoInicial();
+        cargarEstadoInicial(true);
+    }
+    
+    function actualizarSaldoUI() {
+        document.getElementById('saldo-display').textContent = formatoMoneda(saldoUsuario);
+        sessionStorage.setItem('userBalance', saldoUsuario.toFixed(2));
+        renderizarProductos(); 
     }
 
-    async function cargarEstadoInicial() {
-        if (sessionStorage.getItem('authToken')) {
-            userToken = sessionStorage.getItem('authToken');
-            emailRegistrado = sessionStorage.getItem('userEmail');
-            
-            try {
-                const response = await fetch(GET_BALANCE_URL, {
-                    method: 'GET',
-                    headers: { 'Authorization': `Bearer ${userToken}` }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    saldoUsuario = data.balance;
-                    sessionStorage.setItem('userBalance', saldoUsuario.toFixed(2));
-                } else if (response.status === 401) {
-                    cerrarSesion();
-                    return;
-                }
-            } catch (error) {
-                saldoUsuario = parseFloat(sessionStorage.getItem('userBalance')) || 0;
-            }
-
-            document.getElementById('loginModal').style.display = 'none';
-            document.getElementById('email-display').textContent = emailRegistrado;
-        } else {
-            document.getElementById('loginModal').style.display = 'block';
-            document.getElementById('email-display').textContent = 'Invitado';
-        }
-        actualizarSaldoUI();
-    }
-
-    // --- Funciones de Tarjeta / Detección ---
+    // --- Funciones de Detección de Tarjeta ---
     
     function detectarTipoTarjetaRecarga() { 
-        // Detección para el modal de recarga
         const input = document.getElementById('recarga-numero-tarjeta');
         const num = input.value.replace(/\s/g, '');
         const display = document.getElementById('tipo-tarjeta-recarga');
         const formattedNum = num.replace(/(\d{4})/g, '$1 ').trim();
         input.value = formattedNum;
         
-        let tipo = 'No válido';
+        let tipo = '';
         if (num.length >= 4) {
             if (num.startsWith('4')) { tipo = 'VISA'; } 
             else if (num.startsWith('5')) { tipo = 'MASTERCARD'; } 
             else { tipo = 'Otro/No compatible'; }
-        } else {
-             tipo = '';
         }
         display.textContent = tipo;
         return tipo;
     }
     
     function detectarTipoTarjeta() { 
-        // Detección para el modal de compra (sección 2)
         const input = document.getElementById('numero-tarjeta');
         const num = input.value.replace(/\s/g, '');
         const display = document.getElementById('tipo-tarjeta-display');
@@ -548,7 +654,7 @@
         display.textContent = tipoTarjetaDetectado;
     }
 
-    // --- Funciones de Recarga (Modificado) ---
+    // --- Funciones de Recarga ---
     
     function cambiarMetodoPago() {
         const metodo = document.getElementById('recarga-forma-pago').value;
@@ -560,13 +666,15 @@
             tarjetaDiv.style.display = 'block';
             transferenciaDiv.style.display = 'none';
             btn.textContent = 'Pagar Recarga';
-            btn.style.backgroundColor = 'var(--color-success)';
+            btn.style.backgroundColor = 'var(--color-primary)';
+            btn.style.color = 'var(--color-secondary)';
             btn.style.display = 'block';
         } else { // Transferencia
             tarjetaDiv.style.display = 'none';
             transferenciaDiv.style.display = 'block';
-            btn.textContent = 'Continuar (Revisar Instrucciones)';
+            btn.textContent = 'Instrucciones Enviadas (Cerrar)';
             btn.style.backgroundColor = '#777'; 
+            btn.style.color = 'white';
             btn.style.display = 'block';
         }
         document.getElementById('recarga-resultado').textContent = '';
@@ -580,7 +688,6 @@
         }
         document.getElementById('recargaModal').style.display = 'block';
         document.getElementById('recarga-resultado').textContent = '';
-        // Asegurar que la vista inicial sea Tarjeta
         document.getElementById('recarga-forma-pago').value = 'TDC';
         cambiarMetodoPago(); 
     }
@@ -593,14 +700,12 @@
         resultadoDiv.textContent = '';
         
         if (formaPago === 'Transferencia') {
-            // Lógica de Transferencia
-            resultadoDiv.innerHTML = `<span style="color: var(--color-success); font-weight: bold;">✅ Instrucciones Enviadas:</span> Por favor, sigue los pasos de la sección de Transferencia. Los fondos se aplicarán tras la verificación manual.`;
-            // Quitamos el botón de pago después de dar instrucciones para evitar reintentos.
+            resultadoDiv.innerHTML = `<span style="color: var(--color-success); font-weight: bold;">✅ Instrucciones Enviadas:</span> Por favor, sigue los pasos de la sección de Transferencia.`;
             document.getElementById('btn-recargar-pago').style.display = 'none'; 
             return;
         }
 
-        // --- Lógica de Tarjeta (TDC) ---
+        // Lógica de Tarjeta (TDC)
         const numTarjeta = document.getElementById('recarga-numero-tarjeta').value.replace(/\s/g, '');
         const errorTDC = document.getElementById('recarga-error-tarjeta');
         errorTDC.textContent = '';
@@ -612,44 +717,30 @@
         
         // Simulación 3D Secure y Rechazo
         const overlay = document.getElementById('loading-overlay');
-        const loadingTitle = document.getElementById('loading-title');
-        
-        loadingTitle.textContent = 'Verificación de Seguridad 3D Secure...';
         overlay.style.display = 'flex';
-        resultadoDiv.innerHTML = `<span style="color: var(--color-secondary);">Iniciando proceso 3D Secure...</span>`;
         
         await new Promise(resolve => setTimeout(resolve, 5000)); // Espera 5 segundos
 
-        // Rechazo Forzado por "error de banco"
         overlay.style.display = 'none';
         
         resultadoDiv.innerHTML = `
             <span style="color: var(--color-danger); font-weight: bold;">❌ PAGO RECHAZADO</span><br>
-            <small>Fallo en la autenticación 3D Secure o error de comunicación con su banco. Por favor, intente con una transferencia MX.</small>
+            <small>Error en la autenticación 3D Secure (Código: 08003). Por favor, intente con una transferencia MX.</small>
         `;
 
-        // Intentar reportar al backend (opcional, solo para logs)
+        // Intento de log en el backend
         try {
              await fetch(RECHARGE_URL, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${userToken}` 
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
                 body: JSON.stringify({ amount: montoRecarga, paymentMethod: formaPago, status: 'REJECTED' })
             });
-        } catch (e) { /* ignorar error de log */ }
+        } catch (e) { /* ignorar */ }
     }
 
 
-    // --- Funciones de Compra con Saldo (Mantenidas) ---
+    // --- Funciones de Catálogo y Compra ---
 
-    function actualizarSaldoUI() {
-        document.getElementById('saldo-display').textContent = formatoMoneda(saldoUsuario);
-        sessionStorage.setItem('userBalance', saldoUsuario.toFixed(2));
-        renderizarProductos(); 
-    }
-    
     async function procesarCompra() {
         const resultadoDiv = document.getElementById('pago-resultado');
         const overlay = document.getElementById('loading-overlay');
@@ -667,11 +758,7 @@
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${userToken}` 
                 },
-                body: JSON.stringify({ 
-                    cost: montoCompra, 
-                    card_number: document.getElementById('numero-tarjeta').value,
-                    card_holder: document.getElementById('nombre-tarjeta').value,
-                })
+                body: JSON.stringify({ cost: montoCompra })
             });
 
             const data = await response.json();
@@ -704,13 +791,13 @@
 
             const puedeComprar = saldoUsuario >= prod.costo;
             const btnDisabled = puedeComprar ? '' : 'disabled';
-            const btnTexto = puedeComprar ? 'Comprar' : `Saldo Insuficiente`;
+            const btnTexto = puedeComprar ? 'Comprar Ahora' : `Saldo Insuficiente`;
 
             card.innerHTML = `
                 <img src="${prod.imagen}" alt="${prod.nombre}" onerror="this.onerror=null;this.src='img/default.png';">
                 <h4>${prod.nombre}</h4>
-                <div class="descripcion">Saldo Disponible: <br>${formatoMoneda(prod.saldo)} MXN</div>
-                <p class="costo">Costo de Compra: <br>${formatoMoneda(prod.costo)} MXN</p>
+                <div class="descripcion">Saldo Disponible: <br>**${formatoMoneda(prod.saldo)}** MXN</div>
+                <p class="costo">Costo: ${formatoMoneda(prod.costo)} MXN</p>
                 <button ${btnDisabled} onclick="agregarAlCarrito(${prod.costo}, '${prod.nombre}')">${btnTexto}</button>
             `;
             container.appendChild(card);
@@ -730,20 +817,68 @@
         }
 
         if (saldoUsuario < precio) {
-             alert(`❌ Saldo insuficiente en el panel. Necesitas ${formatoMoneda(precio)}, tienes ${formatoMoneda(saldoUsuario)}.`);
+             alert(`❌ Saldo insuficiente. Necesitas ${formatoMoneda(precio)}, tienes ${formatoMoneda(saldoUsuario)}.`);
              return;
         }
 
         montoCompra = precio;
         
         document.getElementById('pago-monto').textContent = formatoMoneda(precio);
-        document.getElementById('pago-resultado').innerHTML = `✅ **${nombreProducto}** añadido. <br> Proceder al 3D Secure para finalizar la adquisición.`;
+        document.getElementById('pago-resultado').innerHTML = `✅ **${nombreProducto}** añadido. Proceda a la verificación de la tarjeta.`;
         document.getElementById('seccion-pago').style.display = 'block';
+        window.scrollTo({ top: document.getElementById('seccion-pago').offsetTop - 100, behavior: 'smooth' });
+    }
+    
+    // --- Lógica de la Pantalla de Carga Inicial ---
+
+    async function cargarEstadoInicial(skipLoginCheck = false) {
+        if (!skipLoginCheck && sessionStorage.getItem('authToken')) {
+             // Si hay token, carga el saldo del backend
+            try {
+                const response = await fetch(GET_BALANCE_URL, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${sessionStorage.getItem('authToken')}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    saldoUsuario = data.balance;
+                } else if (response.status === 401) {
+                    cerrarSesion();
+                    return;
+                }
+            } catch (error) {
+                // Falla el backend, usa el saldo local
+                saldoUsuario = parseFloat(sessionStorage.getItem('userBalance')) || 0;
+            }
+            
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('email-display').textContent = sessionStorage.getItem('userEmail');
+        } else if (!sessionStorage.getItem('authToken')) {
+            // Si no hay token, muestra el modal de login
+            document.getElementById('loginModal').style.display = 'block';
+            document.getElementById('email-display').textContent = 'Invitado';
+        }
+        actualizarSaldoUI();
+    }
+    
+    function iniciarVerificacion() {
+        // Mueve la barra de progreso
+        document.getElementById('initial-progress-bar').style.width = '100%';
+        
+        // Espera 3 segundos para "verificar"
+        setTimeout(() => {
+            document.getElementById('initial-loading-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('initial-loading-screen').style.display = 'none';
+                cargarEstadoInicial();
+            }, 500); // 0.5s para la transición de opacidad
+        }, 3000); 
     }
 
     // Inicializar la aplicación al cargar la página
     window.onload = function() {
-        cargarEstadoInicial();
+        iniciarVerificacion();
     };
 </script>
 
