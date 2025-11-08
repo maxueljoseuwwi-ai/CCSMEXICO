@@ -251,10 +251,13 @@
 </div>
 
 <script>
-    // -----------------------------------------------------------
-    // 🚨🚨 CONFIGURACIÓN DE TU SERVIDOR (DEBES IMPLEMENTAR ESTO) 🚨🚨
-    // -----------------------------------------------------------
-    const BASE_URL = 'https://tuservidor.com/api'; // <--- ¡CAMBIA ESTO!
+    // ---------------------------------------------------------------------------------------
+    // 🚀 CONFIGURACIÓN DE TU SERVIDOR - ¡CORREGIDO!
+    // Apunta a tu Backend real alojado en Render.
+    // ---------------------------------------------------------------------------------------
+    const RENDER_URL = 'https://ccsmexico.onrender.com';
+    const BASE_URL = `${RENDER_URL}/api`; 
+
     const AUTH_URL = `${BASE_URL}/auth`; // Endpoint unificado para Login/Register
     const LOGOUT_URL = `${BASE_URL}/logout`;
     const GET_BALANCE_URL = `${BASE_URL}/balance`;
@@ -295,7 +298,7 @@
         }
 
         tempEmail = email; // Usado para mostrar en la UI
-        errorDiv.textContent = 'Procesando...';
+        errorDiv.textContent = 'Procesando...'; // Muestra el mensaje de procesamiento
 
         try {
             // Envía las credenciales. El servidor debe decidir si es registro (nuevo usuario) o login (existente).
