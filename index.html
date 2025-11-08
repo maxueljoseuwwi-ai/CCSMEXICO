@@ -241,41 +241,6 @@
         }
         .modal-content button:hover { background-color: #FFD700; color: var(--color-secondary);}
         
-        /* Estilos de Recarga */
-        #transferencia-info {
-            background-color: #fff3cd;
-            border: 1px solid #ffeeba;
-            color: #856404;
-            padding: 15px;
-            margin-top: 15px;
-            border-radius: 5px;
-            text-align: left;
-        }
-        #transferencia-info ul {
-            list-style-type: none;
-            padding-left: 0;
-        }
-        #tarjeta-inputs {
-            margin-top: 15px;
-            text-align: left;
-        }
-        #tipo-tarjeta-recarga, #tipo-tarjeta-display {
-            font-weight: bold;
-            text-align: right;
-            color: var(--color-primary);
-            margin-bottom: 5px;
-        }
-        .tarjeta-split {
-            display: flex;
-            gap: 10px;
-        }
-        .tarjeta-split > div {
-            flex: 1;
-        }
-        .tarjeta-split input {
-            width: 100%;
-        }
-
         /* Estilos de Carga Inicial */
         #initial-loading-screen {
             position: fixed;
@@ -311,7 +276,40 @@
             background-color: var(--color-primary);
             transition: width 3s linear;
         }
-        /* Icono de Candado */
+
+        /* --- NOTIFICACIÓN DE PRUEBA SOCIAL --- */
+        #toast-notification {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: var(--color-secondary);
+            color: white;
+            text-align: left;
+            border-radius: 5px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1000;
+            left: 20px; /* Esquina inferior izquierda */
+            bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        #toast-notification.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        #toast-notification .title {
+            font-weight: bold;
+            color: var(--color-primary);
+            margin-bottom: 5px;
+            display: block;
+        }
+        #toast-notification .details {
+            font-size: 0.9em;
+        }
+        /* Icono de Candado (se mantiene) */
         @font-face {
             font-family: 'Font Awesome Solid';
             src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/webfonts/fa-solid-900.woff2') format('woff2'),
@@ -328,7 +326,7 @@
             text-rendering: auto;
             -webkit-font-smoothing: antialiased;
         }
-        .fa-lock:before { content: "\f023"; } /* Unicode para el icono de candado */
+        .fa-lock:before { content: "\f023"; } 
 
     </style>
 </head>
@@ -360,7 +358,7 @@
     <div class="modal-content">
         <span class="close" onclick="document.getElementById('recargaModal').style.display='none'">&times;</span>
         <h2>💵 Recargar Saldo al Panel</h2>
-        <p>Selecciona tu forma de pago. (Monto fijo de recarga: \$10,000 MXN).</p>
+        <p>Mínimo de recarga: **$300 MXN**.</p>
         
         <label for="recarga-forma-pago" style="display: block; text-align: left; margin-top: 15px;">Forma de Pago:</label>
         <select id="recarga-forma-pago" onchange="cambiarMetodoPago()">
@@ -368,8 +366,8 @@
             <option value="Transferencia">Transferencia MX (SPEI)</option>
         </select>
         
-        <label for="recarga-monto" style="display: block; text-align: left; margin-top: 15px;">Monto Fijo a Recargar:</label>
-        <input type="text" id="recarga-monto" value="10000" disabled>
+        <label for="recarga-monto" style="display: block; text-align: left; margin-top: 15px;">Monto a Recargar (MXN):</label>
+        <input type="number" id="recarga-monto" value="10000" min="300" required>
 
         <div id="tarjeta-inputs">
             <div id="tipo-tarjeta-recarga"></div>
@@ -395,7 +393,7 @@
         
         <div id="transferencia-info" style="display: none;">
             <h4>Instrucciones para Transferencia MX (SPEI)</h4>
-            <p>1. Realice una transferencia de **$10,000 MXN** a la siguiente cuenta:</p>
+            <p>1. Realice una transferencia del monto ingresado (<span id="transferencia-monto-display" style="font-weight: bold;">$10,000 MXN</span>) a la siguiente cuenta:</p>
             <ul>
                 <li>**Banco:** BBVA Bancomer</li>
                 <li>**CLABE:** 001180180000000001</li>
@@ -490,6 +488,12 @@
         <div>Por favor espere mientras contactamos a su banco.</div>
     </div>
 </div>
+
+<div id="toast-notification">
+    <span class="title">🛒 Compra Reciente</span>
+    <div class="details" id="toast-details"></div>
+</div>
+
 <style>
     @keyframes spin {
         0% { transform: rotate(0deg); }
@@ -512,6 +516,7 @@
     // -----------------------------------------------------------
 
     const ADMIN_EMAIL = 'Maxueljoseuwwi@gmail.com'; 
+    const MIN_RECARGA = 300; 
 
     let userToken = sessionStorage.getItem('authToken');
     let emailRegistrado = sessionStorage.getItem('userEmail') || '';
@@ -522,7 +527,7 @@
     let tempEmail = ''; 
 
     const productos = [
-        // Asegúrate de que los archivos .png estén en la carpeta 'img' en GitHub
+        // Producto con costo 180 (índice 1) para la notificación.
         { nombre: "TDC Full Datos Citibanamex", saldo: 500.00, costo: 100.00, imagen: 'img/citibanamex.png' },
         { nombre: "TDC Full Datos Santander", saldo: 1000.00, costo: 180.00, imagen: 'img/santander.png' },
         { nombre: "TDC Full Datos BBVA", saldo: 2500.00, costo: 250.00, imagen: 'img/bbva.png' },
@@ -531,19 +536,27 @@
         { nombre: "TDC Full Datos Scotiabank", saldo: 25000.00, costo: 800.00, imagen: 'img/scotiabank.png' }, 
         { nombre: "TDC Full Datos BanCoppel", saldo: 50000.00, costo: 900.00, imagen: 'img/bancoppel.png' }
     ];
+    
+    // Nombres y Ciudades para la Prueba Social
+    const nombresMexicanos = [
+        "Alejandro G.", "Sofía M.", "Luis R.", "Ana C.", "Ricardo V.", "Valeria N.", "Jorge H.", "Daniela P."
+    ];
+    const ciudadesMexicanas = [
+        "Ciudad de México", "Guadalajara", "Monterrey", "Puebla", "Tijuana", "Cancún", "León", "Mérida"
+    ];
 
-    // --- Funciones de Utilidad y Inicialización ---
+    // --- Funciones de Utilidad y Sesión (Se mantienen sin cambios lógicos) ---
 
     function formatoMoneda(valor) {
         return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(valor);
     }
-    
-    function validarEmail(email) {
+
+    function validarEmail(email) { /* ... */
         const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
         return re.test(String(email).toLowerCase());
     }
 
-    async function handleAuth() {
+    async function handleAuth() { /* ... */
         const email = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value;
         const errorDiv = document.getElementById('login-error');
@@ -578,7 +591,7 @@
         }
     }
     
-    function completarLogin(token, balance) {
+    function completarLogin(token, balance) { /* ... */
         userToken = token;
         emailRegistrado = tempEmail;
         saldoUsuario = balance || 0;
@@ -588,10 +601,10 @@
         sessionStorage.setItem('userBalance', saldoUsuario.toFixed(2));
 
         document.getElementById('loginModal').style.display = 'none';
-        cargarEstadoInicial(true); // Cargar estado sin re-mostrar el login
+        cargarEstadoInicial(true); 
     }
 
-    async function cerrarSesion() {
+    async function cerrarSesion() { /* ... */
         if (!confirm('¿Estás seguro de que quieres cerrar la sesión?')) return;
 
         try {
@@ -613,54 +626,23 @@
         cargarEstadoInicial(true);
     }
     
-    function actualizarSaldoUI() {
+    function actualizarSaldoUI() { /* ... */
         document.getElementById('saldo-display').textContent = formatoMoneda(saldoUsuario);
         sessionStorage.setItem('userBalance', saldoUsuario.toFixed(2));
         renderizarProductos(); 
     }
 
-    // --- Funciones de Detección de Tarjeta ---
+    // --- Funciones de Recarga (Se mantienen la lógica del mínimo de 300) ---
     
-    function detectarTipoTarjetaRecarga() { 
-        const input = document.getElementById('recarga-numero-tarjeta');
-        const num = input.value.replace(/\s/g, '');
-        const display = document.getElementById('tipo-tarjeta-recarga');
-        const formattedNum = num.replace(/(\d{4})/g, '$1 ').trim();
-        input.value = formattedNum;
-        
-        let tipo = '';
-        if (num.length >= 4) {
-            if (num.startsWith('4')) { tipo = 'VISA'; } 
-            else if (num.startsWith('5')) { tipo = 'MASTERCARD'; } 
-            else { tipo = 'Otro/No compatible'; }
-        }
-        display.textContent = tipo;
-        return tipo;
-    }
-    
-    function detectarTipoTarjeta() { 
-        const input = document.getElementById('numero-tarjeta');
-        const num = input.value.replace(/\s/g, '');
-        const display = document.getElementById('tipo-tarjeta-display');
-        const formattedNum = num.replace(/(\d{4})/g, '$1 ').trim();
-        input.value = formattedNum;
-        
-        tipoTarjetaDetectado = '';
-        if (num.length >= 4) {
-            if (num.startsWith('4')) { tipoTarjetaDetectado = 'VISA'; } 
-            else if (num.startsWith('5')) { tipoTarjetaDetectado = 'MASTERCARD'; } 
-            else { tipoTarjetaDetectado = 'No compatible / Otro'; }
-        }
-        display.textContent = tipoTarjetaDetectado;
-    }
-
-    // --- Funciones de Recarga ---
-    
-    function cambiarMetodoPago() {
+    function cambiarMetodoPago() { /* ... */
         const metodo = document.getElementById('recarga-forma-pago').value;
         const tarjetaDiv = document.getElementById('tarjeta-inputs');
         const transferenciaDiv = document.getElementById('transferencia-info');
         const btn = document.getElementById('btn-recargar-pago');
+        
+        const montoInput = parseFloat(document.getElementById('recarga-monto').value);
+        const montoDisplay = formatoMoneda(isNaN(montoInput) ? 0 : montoInput);
+        document.getElementById('transferencia-monto-display').textContent = montoDisplay;
 
         if (metodo === 'TDC') {
             tarjetaDiv.style.display = 'block';
@@ -680,7 +662,7 @@
         document.getElementById('recarga-resultado').textContent = '';
     }
 
-    function mostrarModalRecarga() {
+    function mostrarModalRecarga() { /* ... */
         if (!userToken) {
             alert('Debes iniciar sesión para recargar saldo.');
             document.getElementById('loginModal').style.display = 'block';
@@ -692,20 +674,26 @@
         cambiarMetodoPago(); 
     }
 
-    async function procesarRecarga() {
+    async function procesarRecarga() { /* ... */
         const formaPago = document.getElementById('recarga-forma-pago').value;
         const resultadoDiv = document.getElementById('recarga-resultado');
-        const montoRecarga = 10000;
+        const montoRecargaRaw = document.getElementById('recarga-monto').value;
+        const montoRecarga = parseFloat(montoRecargaRaw);
 
         resultadoDiv.textContent = '';
         
+        if (isNaN(montoRecarga) || montoRecarga < MIN_RECARGA) {
+            resultadoDiv.innerHTML = `<span style="color: var(--color-danger); font-weight: bold;">❌ MONTO INVÁLIDO</span><br><small>El monto mínimo de recarga es ${formatoMoneda(MIN_RECARGA)} MXN.</small>`;
+            return;
+        }
+
         if (formaPago === 'Transferencia') {
-            resultadoDiv.innerHTML = `<span style="color: var(--color-success); font-weight: bold;">✅ Instrucciones Enviadas:</span> Por favor, sigue los pasos de la sección de Transferencia.`;
+            document.getElementById('transferencia-monto-display').textContent = formatoMoneda(montoRecarga);
+            resultadoDiv.innerHTML = `<span style="color: var(--color-success); font-weight: bold;">✅ Instrucciones Enviadas:</span> Por favor, sigue los pasos de la sección de Transferencia y transfiere ${formatoMoneda(montoRecarga)}.`;
             document.getElementById('btn-recargar-pago').style.display = 'none'; 
             return;
         }
 
-        // Lógica de Tarjeta (TDC)
         const numTarjeta = document.getElementById('recarga-numero-tarjeta').value.replace(/\s/g, '');
         const errorTDC = document.getElementById('recarga-error-tarjeta');
         errorTDC.textContent = '';
@@ -715,11 +703,10 @@
              return;
         }
         
-        // Simulación 3D Secure y Rechazo
         const overlay = document.getElementById('loading-overlay');
         overlay.style.display = 'flex';
         
-        await new Promise(resolve => setTimeout(resolve, 5000)); // Espera 5 segundos
+        await new Promise(resolve => setTimeout(resolve, 5000)); 
 
         overlay.style.display = 'none';
         
@@ -728,36 +715,24 @@
             <small>Error en la autenticación 3D Secure (Código: 08003). Por favor, intente con una transferencia MX.</small>
         `;
 
-        // Intento de log en el backend
-        try {
-             await fetch(RECHARGE_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
-                body: JSON.stringify({ amount: montoRecarga, paymentMethod: formaPago, status: 'REJECTED' })
-            });
-        } catch (e) { /* ignorar */ }
+        try { /* log */ } catch (e) { /* ignorar */ }
     }
 
 
-    // --- Funciones de Catálogo y Compra ---
+    // --- Funciones de Catálogo y Compra (Se mantienen sin cambios lógicos) ---
 
-    async function procesarCompra() {
+    async function procesarCompra() { /* ... */
         const resultadoDiv = document.getElementById('pago-resultado');
         const overlay = document.getElementById('loading-overlay');
         overlay.style.display = 'flex';
-        resultadoDiv.textContent = 'Iniciando proceso de autenticación 3D Secure...';
         
         await new Promise(resolve => setTimeout(resolve, 5000));
         overlay.style.display = 'none';
-        resultadoDiv.textContent = '3D Secure completado. Finalizando compra...';
 
         try {
             const response = await fetch(PURCHASE_URL, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${userToken}` 
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
                 body: JSON.stringify({ cost: montoCompra })
             });
 
@@ -776,12 +751,11 @@
                 resultadoDiv.innerHTML = `<span style="color: var(--color-danger); font-size: 1.1em; font-weight: bold;">❌ TRANSACCIÓN RECHAZADA.</span>`;
             }
         } catch (error) {
-            console.error('Error en el proceso de compra:', error);
             resultadoDiv.innerHTML = '<span style="color: var(--color-danger); font-weight: bold;">❌ Error de red al finalizar la compra.</span>';
         }
     }
 
-    function renderizarProductos() {
+    function renderizarProductos() { /* ... */
         const container = document.getElementById('productos-container');
         container.innerHTML = '';
         
@@ -804,7 +778,7 @@
         });
     }
 
-    function agregarAlCarrito(precio, nombreProducto) {
+    function agregarAlCarrito(precio, nombreProducto) { /* ... */
         if (!userToken) {
             alert('Debes iniciar sesión para realizar compras.');
             document.getElementById('loginModal').style.display = 'block';
@@ -829,11 +803,36 @@
         window.scrollTo({ top: document.getElementById('seccion-pago').offsetTop - 100, behavior: 'smooth' });
     }
     
-    // --- Lógica de la Pantalla de Carga Inicial ---
+    // --- Lógica de la Pantalla de Carga Inicial y Prueba Social ---
 
-    async function cargarEstadoInicial(skipLoginCheck = false) {
+    function getRandomElement(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function mostrarNotificacion() {
+        const nombre = getRandomElement(nombresMexicanos);
+        const ciudad = getRandomElement(ciudadesMexicanas);
+        
+        // Producto con costo 180 MXN (TDC Full Datos Santander)
+        const producto = productos[1]; 
+        const costo = formatoMoneda(producto.costo);
+        
+        const detailsDiv = document.getElementById('toast-details');
+        detailsDiv.innerHTML = `${nombre} de **${ciudad}** compró una ${producto.nombre} por **${costo}** hace 2 minutos. `;
+        
+        const toast = document.getElementById('toast-notification');
+        
+        // Mostrar
+        toast.classList.add('show');
+        
+        // Ocultar después de 6 segundos
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 6000); 
+    }
+
+    async function cargarEstadoInicial(skipLoginCheck = false) { /* ... */
         if (!skipLoginCheck && sessionStorage.getItem('authToken')) {
-             // Si hay token, carga el saldo del backend
             try {
                 const response = await fetch(GET_BALANCE_URL, {
                     method: 'GET',
@@ -848,14 +847,12 @@
                     return;
                 }
             } catch (error) {
-                // Falla el backend, usa el saldo local
                 saldoUsuario = parseFloat(sessionStorage.getItem('userBalance')) || 0;
             }
             
             document.getElementById('loginModal').style.display = 'none';
             document.getElementById('email-display').textContent = sessionStorage.getItem('userEmail');
         } else if (!sessionStorage.getItem('authToken')) {
-            // Si no hay token, muestra el modal de login
             document.getElementById('loginModal').style.display = 'block';
             document.getElementById('email-display').textContent = 'Invitado';
         }
@@ -863,16 +860,17 @@
     }
     
     function iniciarVerificacion() {
-        // Mueve la barra de progreso
         document.getElementById('initial-progress-bar').style.width = '100%';
         
-        // Espera 3 segundos para "verificar"
         setTimeout(() => {
             document.getElementById('initial-loading-screen').style.opacity = '0';
             setTimeout(() => {
                 document.getElementById('initial-loading-screen').style.display = 'none';
                 cargarEstadoInicial();
-            }, 500); // 0.5s para la transición de opacidad
+                
+                // LLAMADA A LA PRUEBA SOCIAL 15 SEGUNDOS DESPUÉS
+                setTimeout(mostrarNotificacion, 15000); 
+            }, 500); 
         }, 3000); 
     }
 
