@@ -3,12 +3,12 @@ const cors = require('cors');
 const app = express();
 
 // --- CONFIGURACIÓN DE SEGURIDAD (CORS) ---
-// La URL de tu Frontend en Vercel. Debe ser HTTPS y SIN barra diagonal final.
-const allowedOrigins = ['https://ccsmexico.vercel.app'];
+// *** ESTA ES LA ÚNICA LÍNEA QUE CAMBIA EN ESTE ARCHIVO ***
+const allowedOrigins = ['https://ccsmexico-maxuels-projects-f188d42d.vercel.app']; 
 
 app.use(cors({
     origin: (origin, callback) => {
-        // Permitir solicitudes del origen listado (Vercel)
+        // Permitir solicitudes del origen listado (Vercel Preview URL)
         if (allowedOrigins.includes(origin) || !origin) {
             callback(null, true);
         } else {
