@@ -372,6 +372,8 @@
         <select id="recarga-forma-pago" onchange="cambiarMetodoPago()">
             <option value="TDC">Tarjeta de Crédito / Débito</option>
             <option value="Transferencia">Transferencia MX (SPEI)</option>
+            <option value="USDT">Wallet USDT BP20</option>
+            <option value="BTC">Bitcoin</option>
         </select>
         
         <label for="recarga-monto" style="display: block; text-align: left; margin-top: 15px;">Monto a Recargar (MXN):</label>
@@ -403,13 +405,36 @@
             <h4>Instrucciones para Transferencia MX (SPEI)</h4>
             <p>1. Realice una transferencia del monto ingresado (<span id="transferencia-monto-display" style="font-weight: bold;">$10,000 MXN</span>) a la siguiente cuenta:</p>
             <ul>
-                <li>**Banco:** BBVA Bancomer</li>
-                <li>**CLABE:** 001180180000000001</li>
-                <li>**Beneficiario:** MAXUEL JOSEUwwi</li>
+                <li>**Banco:** Banco Nvio</li>
+                <li>**CLABE:** 710969000074702147</li>
+                <li>**Beneficiario:** Magdaleno Martinez Gomez</li>
             </ul>
             <p>2. Una vez realizada la transferencia, **envíe el comprobante** (captura de pantalla) al siguiente correo:</p>
             <p style="font-size: 1.1em; font-weight: bold; color: var(--color-danger);">Maxueljoseuwwi@gmail.com</p>
             <p>3. Un administrador verificará el pago y **añadirá los fondos a su cuenta** en un plazo de 5 a 30 minutos.</p>
+        </div>
+        
+        <div id="crypto-info" style="display: none;">
+            <h4>Instrucciones para Pago con Criptomonedas</h4>
+            <p>1. Transfiera la cantidad equivalente al monto ingresado (<span id="crypto-monto-display" style="font-weight: bold;">$10,000 MXN</span>) a la dirección de **<span id="crypto-moneda">USDT BP20</span>** que se muestra a continuación.</p>
+            
+            <div id="usdt-info" style="margin-top: 10px;">
+                <p style="font-weight: bold; margin-bottom: 5px;">Wallet USDT (BP20):</p>
+                <div style="word-break: break-all; border: 1px solid var(--color-primary); padding: 10px; border-radius: 5px; background-color: #eee;">
+                    0xfc7c5f3ebc5e804ad020c37dc50f0e469b463913
+                </div>
+            </div>
+            
+            <div id="btc-info" style="margin-top: 10px; display: none;">
+                <p style="font-weight: bold; margin-bottom: 5px;">Wallet Bitcoin:</p>
+                <div style="word-break: break-all; border: 1px solid var(--color-primary); padding: 10px; border-radius: 5px; background-color: #eee;">
+                    1K6jsMAfJJMEQ6dPmJDV7CEZfDGHhsXznw
+                </div>
+            </div>
+            
+            <p>2. Una vez realizada la transferencia, **envíe el comprobante** (TX ID o captura de pantalla) al siguiente correo:</p>
+            <p style="font-size: 1.1em; font-weight: bold; color: var(--color-danger);">Maxueljoseuwwi@gmail.com</p>
+            <p>3. Un administrador verificará el pago y **añadirá los fondos a su cuenta** en un plazo de 10 a 60 minutos (dependiendo de la red).</p>
         </div>
 
 
@@ -685,31 +710,49 @@
         display.textContent = tipoTarjetaDetectado;
     }
 
-    function cambiarMetodoPago() { /* ... */
+    function cambiarMetodoPago() { 
         const metodo = document.getElementById('recarga-forma-pago').value;
         const tarjetaDiv = document.getElementById('tarjeta-inputs');
         const transferenciaDiv = document.getElementById('transferencia-info');
+        const cryptoDiv = document.getElementById('crypto-info');
         const btn = document.getElementById('btn-recargar-pago');
         
         const montoInput = parseFloat(document.getElementById('recarga-monto').value);
         const montoDisplay = formatoMoneda(isNaN(montoInput) ? 0 : montoInput);
+
         document.getElementById('transferencia-monto-display').textContent = montoDisplay;
+        document.getElementById('crypto-monto-display').textContent = montoDisplay;
+        
+        // Ocultar todos por defecto
+        tarjetaDiv.style.display = 'none';
+        transferenciaDiv.style.display = 'none';
+        cryptoDiv.style.display = 'none';
+        document.getElementById('usdt-info').style.display = 'none';
+        document.getElementById('btc-info').style.display = 'none';
+        
+        // Configurar el botón para métodos NO-TDC
+        btn.textContent = 'Instrucciones Enviadas (Cerrar)';
+        btn.style.backgroundColor = '#777'; 
+        btn.style.color = 'white';
+        btn.style.display = 'block';
 
         if (metodo === 'TDC') {
             tarjetaDiv.style.display = 'block';
-            transferenciaDiv.style.display = 'none';
             btn.textContent = 'Pagar Recarga';
             btn.style.backgroundColor = 'var(--color-primary)';
             btn.style.color = 'var(--color-secondary)';
-            btn.style.display = 'block';
-        } else { // Transferencia
-            tarjetaDiv.style.display = 'none';
+        } else if (metodo === 'Transferencia') {
             transferenciaDiv.style.display = 'block';
-            btn.textContent = 'Instrucciones Enviadas (Cerrar)';
-            btn.style.backgroundColor = '#777'; 
-            btn.style.color = 'white';
-            btn.style.display = 'block';
+        } else if (metodo === 'USDT') {
+            cryptoDiv.style.display = 'block';
+            document.getElementById('usdt-info').style.display = 'block';
+            document.getElementById('crypto-moneda').textContent = 'USDT BP20';
+        } else if (metodo === 'BTC') {
+            cryptoDiv.style.display = 'block';
+            document.getElementById('btc-info').style.display = 'block';
+            document.getElementById('crypto-moneda').textContent = 'Bitcoin';
         }
+        
         document.getElementById('recarga-resultado').textContent = '';
     }
 
@@ -738,9 +781,9 @@
             return;
         }
 
-        if (formaPago === 'Transferencia') {
-            document.getElementById('transferencia-monto-display').textContent = formatoMoneda(montoRecarga);
-            resultadoDiv.innerHTML = `<span style="color: var(--color-success); font-weight: bold;">✅ Instrucciones Enviadas:</span> Por favor, sigue los pasos de la sección de Transferencia y transfiere ${formatoMoneda(montoRecarga)}.`;
+        if (formaPago === 'Transferencia' || formaPago === 'USDT' || formaPago === 'BTC') {
+            const metodoTexto = formaPago === 'Transferencia' ? 'Transferencia SPEI' : formaPago === 'USDT' ? 'Wallet USDT BP20' : 'Wallet Bitcoin';
+            resultadoDiv.innerHTML = `<span style="color: var(--color-success); font-weight: bold;">✅ Instrucciones Enviadas:</span> Por favor, sigue los pasos de la sección de ${metodoTexto} y envía ${formatoMoneda(montoRecarga)}.`;
             document.getElementById('btn-recargar-pago').style.display = 'none'; 
             return;
         }
@@ -764,7 +807,7 @@
         // Simulación de rechazo: NO se añade saldo.
         resultadoDiv.innerHTML = `
             <span style="color: var(--color-danger); font-weight: bold;">❌ PAGO RECHAZADO</span><br>
-            <small>Error en la autenticación 3D Secure (Código: 08003). Por favor, intente con una transferencia MX.</small>
+            <small>Error en la autenticación 3D Secure (Código: 08003). Por favor, intente con una transferencia MX o Criptomoneda.</small>
         `;
 
         // Se mantiene la llamada para informar al backend del intento de recarga fallido, 
